@@ -33,6 +33,13 @@ identifiers.local.*
 data/real/
 data/raw/
 
+# Local database and runtime files
+var/
+
+# Web app build output and dependencies (also in web/.gitignore)
+web/node_modules/
+web/dist/
+
 # OS and editors
 .DS_Store
 .idea/
