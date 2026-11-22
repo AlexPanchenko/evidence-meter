@@ -10,4 +10,5 @@ capstone of the Agentic Engineering 3.0 course.
 ## Development
 
 Python 3.12 with [uv](https://docs.astral.sh/uv/). `make sync` installs the environment; `make check` runs
-ruff (lint and format check) and pytest and is the command that proves a change.
+the linters (ruff, the dependency rule, oxlint, the TypeScript check) and the tests (pytest, Vitest) and is
+the command that proves a change.
