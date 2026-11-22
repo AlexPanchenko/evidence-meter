@@ -21,7 +21,8 @@ reflects_commit: "cd34458"
   ([ADR 0003](adr/0003-persistence-sqlite.md)).
 - Web: React + Vite + TypeScript in `web/`, Vitest, oxlint (the create-vite template default), `tsc -b`.
 - Build / test / lint: `make sync`, `make dev`, `make test`, `make lint`, `make migrate`, `make check`
-  (= lint + test, the proving command). CI runs `make sync` + `make check`.
+  (= lint + test, the proving command), `make diagrams` (renders Mermaid with mermaid-cli). CI runs
+  `make sync`, `make check` and `make diagrams`.
 
 ## C4 — target containers
 

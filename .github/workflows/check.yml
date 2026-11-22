@@ -21,3 +21,5 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: make sync
       - run: make check
+      # GitHub's Ubuntu runners block Chromium's user-namespace sandbox; CI-only flag.
+      - run: make diagrams MMDC_FLAGS="-p web/puppeteer-ci.json"
