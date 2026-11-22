@@ -9,7 +9,7 @@
       "acs": [], "dod": "`evidence-meter --help` exits 0; GET /health returns 200; `make dev` boots the API on 127.0.0.1", "files_hint": ["src/evidence_meter/entrypoints/", "pyproject.toml"] },
     { "id": "S4", "title": "Migration runner (sqlite3) with apply and revert; empty initial migration", "layer": "scaffold", "deps": ["S1"],
       "acs": [], "dod": "the runner applies and reverts cleanly on a temp database; `make migrate` runs", "files_hint": ["src/evidence_meter/platform/migrate.py", "migrations/"] },
-    { "id": "S5", "title": "Web app: Vite React-TS with one Vitest smoke test and ESLint", "layer": "scaffold", "deps": [],
+    { "id": "S5", "title": "Web app: Vite React-TS with one Vitest smoke test, oxlint and a type check", "layer": "scaffold", "deps": [],
       "acs": [], "dod": "`npm --prefix web test` and lint pass; `make dev` serves the app", "files_hint": ["web/"] },
     { "id": "S6", "title": "Makefile targets dev, test, lint, migrate; .env.example; .gitignore", "layer": "scaffold", "deps": ["S2", "S3", "S4", "S5"],
       "acs": [], "dod": "`make check` passes; .env.example has names without values", "files_hint": ["Makefile", ".env.example", ".gitignore"] },

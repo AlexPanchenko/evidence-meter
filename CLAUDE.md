@@ -2,15 +2,36 @@
 
 Turns a written guide of engineering metrics into a tested tool: collect from an issue tracker and Git,
 compute each metric from a versioned definition, refuse a value the data cannot support, draft a monthly
-page for a person to review. Python 3.12 with uv; the package lives in `src/evidence_meter/`.
+page for a person to review. Python 3.12 with uv; the package lives in `src/evidence_meter/`, the web
+app (React, Vite, TypeScript) in `web/`.
 
 ## Commands
 
-- `make sync`: install or update the environment after a change to `pyproject.toml` or `uv.lock`.
-- `make check`: ruff lint, ruff format check and pytest. This is the command that proves a change; run it
-  before calling any task done and show its last lines.
+- `make sync`: install or update both environments after a change to `pyproject.toml`, `uv.lock` or
+  `web/package-lock.json`.
+- `make check`: `make lint` plus `make test`. This is the command that proves a change; run it before
+  calling any task done and show its last lines.
+- `make lint`: ruff lint and format check, the dependency rule (`tests/test_architecture.py`), oxlint and
+  the TypeScript type check.
+- `make test`: pytest and Vitest.
+- `make dev`: the API on 127.0.0.1:8000 and the web app on 127.0.0.1:5173; stop it after use.
+- `make migrate`: apply pending SQL migrations to `$EVIDENCE_METER_DB`.
 - `make format`: apply ruff formatting. Run it instead of fixing format findings by hand.
 - `uv run pytest tests/<file>.py -k <name>`: one test while iterating; finish with `make check`.
+
+## Architecture
+
+@ARCHITECTURE.md
+
+- Dependency rule: a context imports only itself, `shared` and `platform`; never another context and never
+  `entrypoints`. Inside a context imports point inward (`handler` → `service` → `repo`, `infra` → `app` →
+  `domain`); Computation's `domain` imports only the standard library and `shared`.
+- Contexts talk through events wired in `entrypoints/`; a change that needs one context to call another
+  is a boundary question for `docs/bc-map.md` first, not an import.
+- Where things are: [SPEC.md](SPEC.md) (v1 goals and acceptance criteria),
+  [docs/architecture-map.md](docs/architecture-map.md) (full map), [docs/bc-map.md](docs/bc-map.md)
+  (contexts, events, glossary), [docs/adr/](docs/adr/) (decisions), a `README.md` in each context folder,
+  `docs/features/<slug>/` (feature documents), [.notes/plans/](.notes/plans/) (approved plans).
 
 ## Data: synthetic and public only
 

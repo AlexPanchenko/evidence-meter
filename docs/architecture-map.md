@@ -19,7 +19,7 @@ reflects_commit: "cd34458"
 - CLI: argparse (standard library), script `evidence-meter`.
 - Datastore: SQLite through the standard `sqlite3` module, plain SQL migrations
   ([ADR 0003](adr/0003-persistence-sqlite.md)).
-- Web: React + Vite + TypeScript in `web/`, Vitest, ESLint.
+- Web: React + Vite + TypeScript in `web/`, Vitest, oxlint (the create-vite template default), `tsc -b`.
 - Build / test / lint: `make sync`, `make dev`, `make test`, `make lint`, `make migrate`, `make check`
   (= lint + test, the proving command). CI runs `make sync` + `make check`.
 
