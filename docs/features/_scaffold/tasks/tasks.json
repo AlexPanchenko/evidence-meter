@@ -1,0 +1,21 @@
+{
+  "slug": "_scaffold",
+  "tasks": [
+    { "id": "S1", "title": "Context packages with layer subpackages, shared, platform, entrypoints; README per context", "layer": "scaffold", "deps": [],
+      "acs": [], "dod": "package imports; one folder per bc-map context with its README and no business code", "files_hint": ["src/evidence_meter/"] },
+    { "id": "S2", "title": "Import-rule test (stdlib ast) wired into make lint", "layer": "scaffold", "deps": ["S1"],
+      "acs": [], "dod": "test fails on a planted cross-context import and passes on src/", "files_hint": ["tests/test_architecture.py", "Makefile"] },
+    { "id": "S3", "title": "Entry points: argparse CLI and FastAPI app with /health; smoke tests", "layer": "scaffold", "deps": ["S1"],
+      "acs": [], "dod": "`evidence-meter --help` exits 0; GET /health returns 200; `make dev` boots the API on 127.0.0.1", "files_hint": ["src/evidence_meter/entrypoints/", "pyproject.toml"] },
+    { "id": "S4", "title": "Migration runner (sqlite3) with apply and revert; empty initial migration", "layer": "scaffold", "deps": ["S1"],
+      "acs": [], "dod": "the runner applies and reverts cleanly on a temp database; `make migrate` runs", "files_hint": ["src/evidence_meter/platform/migrate.py", "migrations/"] },
+    { "id": "S5", "title": "Web app: Vite React-TS with one Vitest smoke test and ESLint", "layer": "scaffold", "deps": [],
+      "acs": [], "dod": "`npm --prefix web test` and lint pass; `make dev` serves the app", "files_hint": ["web/"] },
+    { "id": "S6", "title": "Makefile targets dev, test, lint, migrate; .env.example; .gitignore", "layer": "scaffold", "deps": ["S2", "S3", "S4", "S5"],
+      "acs": [], "dod": "`make check` passes; .env.example has names without values", "files_hint": ["Makefile", ".env.example", ".gitignore"] },
+    { "id": "S7", "title": "CI workflow running make sync and make check", "layer": "scaffold", "deps": ["S6"],
+      "acs": [], "dod": "workflow is valid YAML and runs the same commands as local", "files_hint": [".github/workflows/check.yml"] },
+    { "id": "S8", "title": "ARCHITECTURE.md, SPEC.md and an Architecture section in CLAUDE.md", "layer": "scaffold", "deps": ["S1"],
+      "acs": [], "dod": "conventions doc reflects this map; ARCHITECTURE.md under 60 lines; CLAUDE.md under 200 lines and imports @ARCHITECTURE.md", "files_hint": ["ARCHITECTURE.md", "SPEC.md", "CLAUDE.md"] }
+  ]
+}
