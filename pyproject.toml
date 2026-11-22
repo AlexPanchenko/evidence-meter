@@ -25,7 +25,8 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-ra --strict-markers"
+# .env files are read-denied in the agent sandbox; never collect them.
+addopts = "-ra --strict-markers --ignore=.env --ignore=.env.example"
 
 [tool.ruff]
 line-length = 100

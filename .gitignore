@@ -17,7 +17,7 @@ htmlcov/
 .env.*
 !.env.example
 
-# Personal Claude Code files (shared ones are .claude/settings.json and CLAUDE.md)
+# Personal Claude Code files (shared ones are .claude/settings.json, AGENTS.md and CLAUDE.md)
 .claude/settings.local.json
 CLAUDE.local.md
 .claude/instructions-loaded.jsonl

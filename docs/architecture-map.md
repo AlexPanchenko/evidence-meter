@@ -79,7 +79,7 @@ C4Container
   `platform/migrate.py`, recorded in `schema_migrations`; `make migrate`.
 - **Tests:** pytest; unit tests without I/O, integration tests on a temp SQLite file (no container);
   every metric gets golden data with hand-computed expected values. Web: Vitest.
-- **Data:** synthetic and public only; team-level outputs only, never per person (CLAUDE.md).
+- **Data:** synthetic and public only; team-level outputs only, never per person (AGENTS.md).
 - **UI / styling:** the Vite template's plain CSS until a design system is chosen.
 
 ## Datastores
@@ -116,5 +116,5 @@ C4Container
 ## Reconciliation with the authored architecture doc
 
 `docs/bc-map.md` is authoritative for contexts, events, glossary and structure per context; this map
-takes them unchanged. `CLAUDE.md` is authoritative for commands, data rules and commits. No
-`ARCHITECTURE.md` existed before this map; the scaffold adds a short one that points here.
+takes them unchanged. `AGENTS.md` (imported by `CLAUDE.md`) is authoritative for commands, data rules
+and commits. No `ARCHITECTURE.md` existed before this map; the scaffold adds a short one that points here.
