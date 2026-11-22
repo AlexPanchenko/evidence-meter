@@ -9,6 +9,7 @@ SECRET_READ_DENIES = [
     "Read(*.key)",
     "Read(~/.ssh/**)",
     "Read(~/.aws/**)",
+    "Read(**/credentials*)",
 ]
 PRIVATE_DATA_DENIES = [
     "Read(*.private.*)",

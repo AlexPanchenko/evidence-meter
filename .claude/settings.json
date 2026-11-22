@@ -43,7 +43,8 @@
       "Read(identifiers.local.*)",
       "Edit(identifiers.local.*)",
       "Read(**/data/real/**)",
-      "Read(**/data/raw/**)"
+      "Read(**/data/raw/**)",
+      "Read(**/credentials*)"
     ]
   },
   "sandbox": {
