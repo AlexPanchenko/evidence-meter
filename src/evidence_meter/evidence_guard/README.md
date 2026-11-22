@@ -5,5 +5,6 @@ output is a verdict with a reason, so a refused value is a result, not an error.
 
 - **Terms:** Verdict, RefusalReason, Coverage, Threshold.
 - **Publishes:** `ValueAccepted`, `ValueRefused`.
-- **Listens to:** `MetricComputed`, `DefinitionVersionPublished`.
+- **Listens to:** `MetricComputed`, `DefinitionVersionPublished`, `DefinitionVersionRetired` (drop that
+  version's thresholds for new verdicts).
 - **Structure:** handler/service/repo; move to domain/app/infra if the rules grow.

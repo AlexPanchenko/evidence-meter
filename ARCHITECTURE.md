@@ -43,7 +43,7 @@ Structure inside a context: Computation is `domain/` → `app/` → `infra/`; th
 | `ReportingPeriodClosed` | external trigger (CLI or scheduler) | Collection |
 | `TrackerSnapshotCollected`, `GitHistoryCollected` | Collection | Computation |
 | `CollectionFailed` | Collection | Reporting |
-| `DefinitionVersionPublished` | Definitions | Computation, Evidence Guard |
+| `DefinitionVersionPublished`, `DefinitionVersionRetired` | Definitions | Computation, Evidence Guard |
 | `MetricComputed` | Computation | Evidence Guard |
 | `ValueAccepted`, `ValueRefused` | Evidence Guard | Reporting |
 | `PageDrafted`, `PageReviewed`, `PagePublished` | Reporting | nobody yet |

@@ -35,6 +35,7 @@ context gets its own word.
 | 9 | `PageReviewed` | Reporting |
 | 10 | `PagePublished` | Reporting |
 | 11 | `ReportingPeriodClosed` | not assigned (see below) |
+| 12 | `DefinitionVersionRetired` | Definitions |
 
 ## Contexts
 
@@ -65,7 +66,7 @@ scheduler) that starts Collection; revisit if periods ever need reopening.
 |---|---|
 | Collection | Source (tracker or Git), Snapshot, Issue, IssueState, Commit |
 | Definitions | MetricDefinition, DefinitionVersion, Formula, MinimumData |
-| Computation | Measurement (raw value plus inputs), Period, Team |
+| Computation | Measurement (raw value plus inputs), Input (a named value read from a snapshot), FormulaId (which pure formula a definition names), Period, Team |
 | Evidence Guard | Verdict, RefusalReason, Coverage, Threshold |
 | Reporting | MonthlyPage, PageState, Review, Publication |
 
@@ -76,11 +77,13 @@ their lifecycle.
 
 ```mermaid
 flowchart LR
-    Trigger([ReportingPeriodClosed]) --> Collection
+    Trigger([CLI or scheduler]) -- ReportingPeriodClosed --> Collection
     Collection -- TrackerSnapshotCollected / GitHistoryCollected --> Computation
     Definitions -- DefinitionVersionPublished --> Computation
     Computation -- MetricComputed --> Guard[Evidence Guard]
     Definitions -- DefinitionVersionPublished --> Guard
+    Definitions -- DefinitionVersionRetired --> Computation
+    Definitions -- DefinitionVersionRetired --> Guard
     Guard -- ValueAccepted / ValueRefused --> Reporting
     Collection -- CollectionFailed --> Reporting
 ```
@@ -115,3 +118,6 @@ Drafted with Claude on 2026-11-22; the owner reviewed each boundary choice the s
 - `ReportingPeriodClosed` left as an external trigger: accepted.
 - `status` renamed per context and domain/app/infra for Computation only: accepted.
 - Rejected from Claude's proposal: nothing this round.
+- Added on the module 4 checklist review (2026-11-22): `DefinitionVersionRetired` as the twelfth event,
+  so a retired version stops new values without rewriting old ones; Computation's own terms `Input` and
+  `FormulaId`, since `Period` and `Team` are shared. Owner accepted.
