@@ -74,6 +74,6 @@ The project is the capstone of the Agentic Engineering 3.0 course; the history i
 - One or more commits per lesson, never one commit across unrelated lessons. Subject starts with the lesson
   id: `[m04-l04] <what changed>`; a change that serves several lessons of one step names them all:
   `[m04-l02 m04-l04] <what>`.
-- When a lesson's evidence is complete, tag the last commit `ae3/<lesson-id>`. Never move a pushed tag and
-  never force-push.
+- When a lesson's evidence is complete, tag the last commit `ae3/<lesson-id>` with `git tag -a`, because
+  `git push --follow-tags` pushes only annotated tags. Never move a pushed tag and never force-push.
 - Commit only what the lesson changed; `make check` passes before each commit.
