@@ -42,12 +42,15 @@ migrate:
 
 # Render every Mermaid block in tracked Markdown with mermaid-cli; a diagram that does not parse fails.
 # Not part of check: Chromium cannot start inside the agent sandbox. CI runs it.
+# web/mermaid.config.json sets htmlLabels false, so labels are SVG text that every viewer draws; HTML
+# labels (<foreignObject>) show as empty boxes in Preview, Quick Look and <img>, and the last line fails on them.
 diagrams:
 	@mkdir -p var/diagrams
 	@set -e; for f in $$(git grep -l '```mermaid' -- '*.md'); do \
 		echo "render $$f"; \
-		$(WEB) exec -- mmdc --quiet $(MMDC_FLAGS) -i "$$f" -o "var/diagrams/$$(echo $$f | tr / _)"; \
+		$(WEB) exec -- mmdc --quiet -c $(CURDIR)/web/mermaid.config.json $(MMDC_FLAGS) -i "$$f" -o "var/diagrams/$$(echo $$f | tr / _)"; \
 	done
+	@if grep -l '<foreignObject' var/diagrams/*.svg; then echo "labels rendered as HTML: see web/mermaid.config.json"; exit 1; fi
 
 # The proving command: lint, format check, the dependency rule and all tests.
 check: lint test
