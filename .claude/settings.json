@@ -49,9 +49,14 @@
   "sandbox": {
     "enabled": true,
     "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
     "filesystem": {
       "allowWrite": [
         "~/.cache/uv"
+      ],
+      "denyRead": [
+        "~/.ssh",
+        "~/.aws"
       ]
     },
     "network": {

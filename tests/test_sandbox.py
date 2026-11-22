@@ -23,6 +23,11 @@ def test_session_fails_when_sandbox_is_unavailable(settings: dict) -> None:
     assert _sandbox(settings)["failIfUnavailable"] is True
 
 
+def test_no_command_leaves_the_sandbox(settings: dict) -> None:
+    # Strict mode: no "run unsandboxed" escape, not even with a prompt.
+    assert _sandbox(settings)["allowUnsandboxedCommands"] is False
+
+
 def test_network_allowlist_is_exact(settings: dict) -> None:
     domains = set(_sandbox(settings)["network"]["allowedDomains"])
     assert domains == ALLOWED_DOMAINS
@@ -35,8 +40,7 @@ def test_extra_writes_stay_inside_the_uv_cache(settings: dict) -> None:
 
 @pytest.mark.parametrize("home_dir", ["~/.ssh", "~/.aws"])
 def test_credential_dirs_are_closed_to_child_processes(settings: dict, home_dir: str) -> None:
-    # Either an explicit sandbox denyRead or a Read deny rule, which Claude Code carries
-    # into the sandbox (m03-l07 page, section 7; not yet checked against current docs).
-    deny_read = _sandbox(settings).get("filesystem", {}).get("denyRead", [])
-    read_denies = settings["permissions"]["deny"]
-    assert home_dir in deny_read or f"Read({home_dir}/**)" in read_denies
+    # Explicit in the sandbox, so it does not depend on Read deny rules being carried over.
+    assert home_dir in _sandbox(settings)["filesystem"]["denyRead"]
+    # The Read deny rule stays too: it covers Claude's own Read tool and simple cat/head.
+    assert f"Read({home_dir}/**)" in settings["permissions"]["deny"]
