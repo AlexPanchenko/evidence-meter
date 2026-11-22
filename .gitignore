@@ -20,6 +20,7 @@ htmlcov/
 # Personal Claude Code files (shared ones are .claude/settings.json and CLAUDE.md)
 .claude/settings.local.json
 CLAUDE.local.md
+.claude/instructions-loaded.jsonl
 
 # Private definitions (organisation codes and thresholds); normally kept outside the repository
 *.private.*
