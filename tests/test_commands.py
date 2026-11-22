@@ -1,6 +1,6 @@
 """Regression tests for the project slash commands in .claude/commands/ (AE 3.0 m04-l03).
 
-A command is shared through git like CLAUDE.md, so its contract is pinned here: it has a description
+A command is shared through git like AGENTS.md, so its contract is pinned here: it has a description
 for the command menu and it reviews against the project's own rules.
 """
 
@@ -26,7 +26,7 @@ def test_review_diff_has_a_description(review_diff: str) -> None:
     assert _frontmatter(review_diff)["description"].strip()
 
 
-@pytest.mark.parametrize("source", ["CLAUDE.md", ".claude/rules/"])
+@pytest.mark.parametrize("source", ["AGENTS.md", ".claude/rules/"])
 def test_review_diff_checks_against_project_rules(review_diff: str, source: str) -> None:
     assert source in review_diff
 
