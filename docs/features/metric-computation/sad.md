@@ -277,24 +277,16 @@ sequenceDiagram
 
 ## 7. Deployment view
 
-<!-- 🎯 Навіщо: ТОПОЛОГІЯ, яку DevOps має знати без читання Helm-чартів — скільки реплік,  -->
-<!--           де живе фоновий обробник, ПРИ ЯКИХ ЧИСЛАХ масштабуємось.                     -->
-<!-- 📋 Що писати: 2-3 речення про топологію + метрики + алерти + конкретні числа-пороги.   -->
-<!-- 📌 Приклад: «500 IC → партиціонування за кварталом» (не «при зростанні подумаємо»).    -->
-<!-- 🎯 Можна N/A для XS/S функцій, що переюзають існуюче розгортання без змін.            -->
+<!-- N/A: F1 reuses the existing CLI deployment unit; no server, replicas or monitoring are added (target_surfaces: [cli], ADR 0002). -->
 
-<Topology in 2-3 sentences. Where it runs (k8s / VM / serverless), replicas, scaling thresholds.>
+Deliberately not applicable for F1. The feature runs as the existing `evidence-meter` CLI on the Lead's
+laptop, with the SQLite file at `$EVIDENCE_METER_DB` (default `var/evidence-meter.sqlite3`); the API is
+unchanged and local-only. The only runtime target, ≤ 10 s for one team and period with up to 5,000 issues,
+is verified in §10.
 
-**Monitoring:**
-- <Metrics — e.g. Prometheus `<metric_name>`>
-- <Alerts — e.g. "outbox lag > 10 min → page on-call">
-- <Tracing — e.g. OpenTelemetry HTTP spans>
-
-**Scaling thresholds:**
-- <e.g. 500 IC × 5 goals × 26 checkpoints/Q = 65k rows/year — comfortable in one table>
-- <e.g. partitioning by quarter at >500k rows/year>
-
-<!-- For XS/S that doesn't change deployment: <!-- N/A: feature reuses existing deployment unit -->. -->
+**Capacity note:** about 15 teams × 12 periods ≈ 180 snapshots a year of up to 5,000 issues each; one
+SQLite file holds this comfortably, so no scaling threshold is set in F1. Revisit with the all-teams run
+(PRD approach C).
 
 ## 8. Crosscutting concepts
 
