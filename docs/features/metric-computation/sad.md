@@ -308,17 +308,19 @@ SQLite file holds this comfortably, so no scaling threshold is set in F1. Revisi
 
 ## 9. Architecture decisions
 
-<!-- 🎯 Навіщо: ЗВОРОТНИЙ ІНДЕКС на папку adr/. `ls adr/` дає файли, §9 дає семантику —    -->
-<!--           чому вони існують, до якого зрізу SAD привʼязані, у якому статусі.           -->
-<!-- 📋 Що писати: таблиця з 4 колонками. Один рядок на ADR. Mixed status — це OK.         -->
-<!-- 📌 Приклад: «0001 | Зберігати урок як таблицю блоків | Accepted | §4».                -->
-
 | # | Title | Status | Section |
 |---|---|---|---|
-| <NNNN> | <imperative — e.g. "Use sliding window for rate limiting"> | Accepted | §<N> |
-| <NNNN> | <imperative — e.g. "Co-locate outbox worker in API process"> | Accepted | §<N> |
+| [0001](adr/0001-import-synthetic-snapshot-file-until-collection-adapter-exists.md) | Import a synthetic snapshot file until Collection's tracker adapter exists | Accepted | §3 |
+| [0002](adr/0002-deliver-f1-as-cli-only-and-keep-api-health-only.md) | Deliver F1 as a CLI only and keep the API health-only | Accepted | §4 |
+| [0003](adr/0003-orchestrate-compute-in-entrypoints-with-in-process-events.md) | Orchestrate compute in entrypoints with in-process events | Accepted | §4 |
+| [0004](adr/0004-identify-snapshots-by-content-hash-and-measurements-by-natural-key.md) | Identify snapshots by content hash and measurements by natural key | Accepted | §4 |
+| [0005](adr/0005-drop-person-fields-at-snapshot-import.md) | Drop person fields at snapshot import | Accepted | §4 |
+| [0006](adr/0006-prefix-tables-by-owning-context-in-one-sqlite-file.md) | Prefix tables by owning context in one SQLite file | Accepted | §5 |
+| [0007](adr/0007-return-refusals-as-typed-results-with-stable-codes.md) | Return refusals as typed results with stable codes | Accepted | §8 |
+| [0008](adr/0008-use-utc-calendar-months-for-periods.md) | Use UTC calendar months for periods | Accepted | §8 |
 
-ADR files live under `docs/features/<slug>/adr/NNNN-<title>.md`.
+ADR files live under `docs/features/metric-computation/adr/NNNN-<title>.md`. Repository-wide decisions
+(stack, modular monolith, SQLite, deferred sign-in) are in [docs/adr/](../../adr/).
 
 ## 10. Quality requirements
 
