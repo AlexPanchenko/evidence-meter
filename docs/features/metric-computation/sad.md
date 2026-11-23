@@ -210,35 +210,70 @@ C4Container
 
 ## 6. Runtime view
 
-<!-- 🎯 Навіщо: ПОТІК У RUNTIME для 1-2 критичних сценаріїв. Хто з ким коли і у якому     -->
-<!--           порядку говорить. Без §6 §5 — лише купа коробок без життя.                  -->
-<!-- 📋 Що писати: Mermaid sequenceDiagram. Учасники — імена з §5 (не вигадуй нові!).      -->
-<!--           Повідомлення семантичні («складає чорновик»), БЕЗ HTTP-методів/шляхів —     -->
-<!--           ендпоінт-рівневі sequence-діаграми зʼявляться у stage 06 (api-forge).        -->
-<!-- ⏳ RESERVED FOR SEQUENCES: architecture-design сіє лише primary flow(s) тут.          -->
-<!--           complete-sequence-diagrams (stage 06) ДОПОВНЮЄ §6 кожним критичним flow /    -->
-<!--           кожним §5 AC — без обмеження. Не намагайся покрити все тут.                  -->
-<!-- 📌 Приклад: «methodist → web-app: складає чорновик → web-app → content-api: зберегти». -->
+Seed flows from architecture-design; `complete-sequence-diagrams` adds the remaining flows (snapshot import,
+person-breakdown refusal, reopened passes, period not closed) and the AC → flow coverage table. Participant
+names are the §5 containers; messages are semantic, the command syntax comes with the CLI contract.
 
-**Critical flow 1: <flow name>**
+**Critical flow 1: compute cycle time and re-run (AC-01, AC-02, AC-03)**
 
 ```mermaid
 sequenceDiagram
-    actor User
-    participant API
-    participant Service
-    participant DB
-    User->>API: <request>
-    API->>Service: <call>
-    Service->>DB: <write tx>
-    DB-->>Service: ok
-    Service-->>API: result
-    API-->>User: 201
+    actor Lead
+    participant CLI
+    participant Definitions
+    participant Collection
+    participant Computation
+    participant DB as Local database
+    Lead->>CLI: compute cycle time for team-alpha, 2026-10
+    CLI->>Definitions: resolve current cycle-time version and team-alpha state map
+    Definitions-->>CLI: definition id, version 1, state map
+    CLI->>Collection: get the closed snapshot for team-alpha, 2026-10
+    Collection->>DB: read collection_* rows
+    Collection-->>CLI: snapshot id, issues with state changes
+    CLI->>Computation: compute with mapped inputs
+    Computation->>Computation: derive passes, apply state map, take the median (pure)
+    Computation->>DB: look up measurement by team, period, definition, version, snapshot id
+    alt no earlier measurement
+        Computation->>DB: insert measurement (one transaction)
+        Computation-->>CLI: recorded measurement
+        CLI->>CLI: publish MetricComputed (in-process, no listeners in F1)
+    else identical earlier measurement
+        Computation-->>CLI: matches the earlier measurement, nothing recorded
+    else different earlier measurement
+        Computation-->>CLI: defect: re-run differs, neither value shown
+    end
+    CLI-->>Lead: value marked not yet checked, definition id and version, state map, passes counted, issues excluded
 ```
 
-<!-- For XS/S: 1 flow above is enough. For M+: add 2-4 more (e.g. failure-mode flow, async flow). -->
+**Critical flow 2: refusal before any write (AC-04, AC-05, AC-07, AC-10)**
 
-**Critical flow 2: <e.g. async event propagation>** — <if applicable, otherwise N/A>.
+```mermaid
+sequenceDiagram
+    actor Lead
+    participant CLI
+    participant Definitions
+    participant Collection
+    participant Computation
+    Lead->>CLI: compute cycle time for a team and period
+    CLI->>Definitions: resolve version and state map
+    alt definitions file missing
+        Definitions-->>CLI: refused: definitions file missing (AC-05)
+    else requested version retired
+        Definitions-->>CLI: refused: version retired, current is version 2 (AC-10)
+    else resolved
+        Definitions-->>CLI: version and state map
+        CLI->>Collection: get the closed snapshot
+        alt no snapshot for team and period
+            Collection-->>CLI: refused: import a snapshot for this team and period first (AC-07)
+        else snapshot found
+            Collection-->>CLI: snapshot
+            CLI->>Computation: compute with mapped inputs
+            Computation->>Computation: find tracker states the state map does not cover
+            Computation-->>CLI: refused: unmapped states listed (AC-04)
+        end
+    end
+    CLI-->>Lead: plain reason, non-zero exit; nothing recorded on any branch
+```
 
 ## 7. Deployment view
 
