@@ -48,29 +48,32 @@ they get §10 scenarios but do not override the three above.
 
 ## 2. Constraints
 
-<!-- 🎯 Навіщо: §4 (стратегія) працює тільки коли §2 зафіксувала, ЩО ВЖЕ ЗАФІКСОВАНО:    -->
-<!--           стек, версії, дедлайн, регуляторні вимоги. Це вхід, не вихід.             -->
-<!-- 📋 Що писати: чотири блоки — Технічні / Організаційні / Конвенції / Регуляторні.     -->
-<!-- 📌 Приклад: «Postgres 18» (не «Postgres»); «дедлайн Q3 — жорсткий» (не «бажано»).    -->
-
 **Technical.**
-- <Language + version, e.g. Go 1.26>
-- <Framework + version, e.g. chi v5.1, pgx v5.7>
-- <Datastore + version, e.g. Postgres 18>
-- <Architecture convention, e.g. hexagonal per CLAUDE.md>
+- Python 3.12 with uv; standard library first. A new dependency needs the owner's OK and a licence and
+  maintenance check (AGENTS.md).
+- SQLite through the standard `sqlite3` module; plain SQL migrations `migrations/NNNN_<name>.up.sql` /
+  `.down.sql` applied by `platform/migrate.py` ([repo ADR 0003](../../adr/0003-persistence-sqlite.md)).
+- Modular monolith: five contexts, wired only in `entrypoints/`; the dependency rule is enforced by
+  `tests/test_architecture.py` ([repo ADR 0002](../../adr/0002-modular-monolith.md)). Computation `domain`
+  imports only the standard library and `shared`.
+- CLI on argparse (`entrypoints/cli.py`); FastAPI exists with `/health` only and binds to 127.0.0.1 until
+  OIDC sign-in ships ([repo ADR 0004](../../adr/0004-auth-oidc-deferred.md)).
 
 **Organisational.**
-- <Effort budget, e.g. 3 person-weeks>
-- <Deadline, e.g. 2026-Q3 hard>
-- <Team composition, e.g. 1 backend + 0.5 frontend>
+- One developer (the capstone owner), AI-assisted.
+- Design in week 1 (S7-S8, until 2026-11-26); implementation in week 2 (S9, 2026-11-27 to 2026-12-03).
 
 **Conventions.**
-- <Link to CLAUDE.md or project conventions>
-- <Naming, ID strategy, error-handling pattern>
+- [AGENTS.md](../../../AGENTS.md), [ARCHITECTURE.md](../../../ARCHITECTURE.md), [bc-map](../../bc-map.md)
+  (contexts, events, glossary), [architecture-map](../../architecture-map.md) (current code).
+- Failing test first; every metric gets golden data with expected values computed by hand.
 
 **Regulatory / external.**
-- <e.g. GDPR — user deletion behavior per ADR-NNNN>
-- <e.g. SOC2, PCI — applicable controls>
+- The repository is public: synthetic data only in code, tests, fixtures and docs. An organisation's metric
+  codes, thresholds and state names live in the private definitions file outside git
+  (`~/.config/evidence-meter/`), read only by `definitions/`.
+- Results are team-level only; nothing per person in outputs, records or logs (SPEC non-goals).
+- The snapshot may carry assignees and authors, so a security review is required (PRD §6.1).
 
 ## 3. Context and scope
 
