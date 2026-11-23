@@ -324,29 +324,33 @@ ADR files live under `docs/features/metric-computation/adr/NNNN-<title>.md`. Rep
 
 ## 10. Quality requirements
 
-<!-- 🎯 Навіщо: ДЕРЕВО ЯКОСТЕЙ (Quality Tree) — беремо мету з §1 і розкладаємо на          -->
-<!--           конкретні листя: тести, метрики, конфіги, drill-и. ⭐ Без §10 §1 — це       -->
-<!--           маніфест. З §10 кожна декларація мапиться на щось, ЩО МОЖНА ДОВЕСТИ.        -->
-<!-- 📋 Що писати: на кожну якість з §1 — When / Then / How verify. Числа з PRD §6 NFR     -->
-<!--           ДОСЛІВНО (не округлюй p95 ≤250мс до ≤300мс — це F6-помилка критика).        -->
-<!-- 📌 Приклад: «p95 ≤500 мс на UPDATE блоку, перевіримо k6 load test 100 req/s».        -->
+Each quality goal from §1, plus run time and offline, as a testable scenario. Numbers are verbatim from
+PRD §6; test file names are proposals that `plan-tests` confirms.
 
-Each top-3 goal from §1 expanded into a full scenario:
+**QG-1. Reproducibility**
+- **When:** the Lead computes again a team and period already computed, with the same snapshot and the same definition version.
+- **Then:** 100% identical value and inputs on re-run; the CLI says it matches the earlier measurement and records no second one; a difference is reported as `rerun_differs` and neither value is shown.
+- **How verify:** re-run test over the golden data in `make check` (`tests/test_cycle_time_golden.py`).
 
-**QG-1. <quality attribute>**
-- **When:** <trigger condition>
-- **Then:** <expected behavior with numbers from PRD NFR>
-- **How verify:** <test / chaos drill / load test / observability>
+**QG-2. Team-level only**
+- **When:** any F1 command runs, including a request for a breakdown by person.
+- **Then:** 0 per-person fields in command output, records or logs; the breakdown request is refused with `person_breakdown`.
+- **How verify:** a test scans every output (SPEC acceptance criterion 5): command output, `collection_*` and `computation_*` rows and captured logs (`tests/test_privacy_outputs.py`).
 
-**QG-2. <quality attribute>**
-- **When:** <trigger>
-- **Then:** <expected>
-- **How verify:** <how>
+**QG-3. Honest refusal, all-or-nothing**
+- **When:** a run is refused (AC-04, AC-05, AC-06, AC-07, AC-09, AC-10) or fails.
+- **Then:** 0 partial records after a refused or failed run; the Lead gets the plain reason for the refusal code.
+- **How verify:** test that every refusal AC leaves the store unchanged, comparing the database contents before and after each case (`tests/test_refusals_leave_store_unchanged.py`).
 
-**QG-3. <quality attribute>**
-- **When:** <trigger>
-- **Then:** <expected>
-- **How verify:** <how>
+**QG-4. Run time**
+- **When:** the Lead computes one team and period from a snapshot of up to 5,000 issues.
+- **Then:** ≤ 10 s on a developer laptop.
+- **How verify:** timed test in CI on a synthetic 5,000-issue snapshot (`tests/test_compute_runtime.py`). CI stands in for the laptop, as the PRD states; a slower CI can only raise a false alarm, never hide a slowdown.
+
+**QG-5. Offline**
+- **When:** a compute run.
+- **Then:** 0 network calls during computation.
+- **How verify:** test with network access blocked (SPEC acceptance criterion 8): sockets patched to fail during compute (`tests/test_compute_offline.py`).
 
 ## 11. Risks and technical debt
 
