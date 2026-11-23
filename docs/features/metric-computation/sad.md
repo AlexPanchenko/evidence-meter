@@ -354,25 +354,26 @@ PRD §6; test file names are proposals that `plan-tests` confirms.
 
 ## 11. Risks and technical debt
 
-<!-- 🎯 Навіщо: ⭐ збирає ВСЕ, що може зламатись — і не лише технічне. Без §11 ризики   -->
-<!--           обговорюються на стендапах і губляться; борг лишається у голові того,    -->
-<!--           хто його прийняв.                                                          -->
-<!-- 📋 Що писати: таблиця ризик/борг — серйозність — мітигація — власник. Технічний    -->
-<!--           борг окремою секцією.                                                      -->
-<!-- 📌 Приклад: «EM не пушить — member не оновлює дані | High | …». Перший ризик —      -->
-<!--           часто продуктовий, не технічний. Це нормально.                            -->
-
-<!-- Severity column literals: Low / Medium / High for regular risks; "Open question" for rows
-     created by Step-7 `Save as Open Question` resolutions (see references/socratic-loop.md). -->
-
 | Risk / debt | Severity | Mitigation | Owner |
 |---|---|---|---|
-| <e.g. Outbox lag may reach hours during downstream outage> | Medium | <Alert >10 min, on-call playbook, retry backoff> | <DevOps> |
-| <e.g. No event schema versioning in v1> | Medium | <ADR-NNNN planned for v2, graceful handling of unknown fields> | <Backend> |
-| Open architectural decision: <decision-headline> | Open question | Resolve before <stage trigger or YYYY-MM-DD>; <inline rationale from Step-7 Save-as-OQ> | <owner> |
+| The snapshot file shape diverges from what a real tracker export or the future Collection adapter produces ([ADR 0001](adr/0001-import-synthetic-snapshot-file-until-collection-adapter-exists.md)) | Medium | Define the shape once in the CLI contract with a synthetic sample; the adapter feature must emit the same shape | capstone owner |
+| State maps miss tracker states, so many runs are refused (KPI: ≤ 10% of runs from the second month) | Medium | The refusal lists the unmapped states (AC-04); measure the share over the first closed month | capstone owner |
+| Private state names or definition codes leak into committed files (PRD §6.1 abuse case) | Medium | Names live only in the private TOML file and the Lead's terminal; fixtures and golden data are synthetic; `/review-diff` before each commit | capstone owner |
+| A change to the canonical serialisation changes every snapshot id ([ADR 0004](adr/0004-identify-snapshots-by-content-hash-and-measurements-by-natural-key.md)) | Medium | Fix the canonical form in the contract; a golden test pins the hash of a sample snapshot | capstone owner |
+| A team of one or two people: its team value is effectively one person's value (PRD §8) | Medium | Resolved in the Evidence Guard feature PRD; F1 sets no limit | capstone owner |
+| UTC months differ from a local by-hand count near month boundaries ([ADR 0008](adr/0008-use-utc-calendar-months-for-periods.md)) | Low | Documented; golden data pins a pass done near midnight; switching is a new definition version | capstone owner |
+| No by-hand baseline, so KPI 1 cannot be compared yet (PRD §8) | Low | The owner times one team-month by hand by 2026-11-30 | capstone owner |
 
 **Accepted debt (acceptable in v1, plan to fix later):**
-- <e.g. Goal entity is not versioned (immutable) — OK for v1, may need audit versioning in v2>
+- Definitions resolves versions from the private file on each run and emits no `DefinitionVersionPublished` or
+  `DefinitionVersionRetired` event; `MetricComputed` is published with no listeners (ADR 0003). Wire listeners
+  when Evidence Guard arrives.
+- From the architecture map: the API error envelope covers `HTTPException` only, and `platform/migrate.py`
+  `revert_last()` interpolates a migration name read back from the table without re-checking it. F1 is
+  CLI-only and does not touch either; fix before the first data route, or as a separate small change.
+- `entrypoints/` grows into a coordinator (ADR 0003); table isolation is a convention plus a test (ADR 0006).
+- `.env.example` needs `EVIDENCE_METER_DEFINITIONS`; the file is write-denied for Claude, so the owner adds it
+  during S9.
 
 ## 12. Glossary
 
