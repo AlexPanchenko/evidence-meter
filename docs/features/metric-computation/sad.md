@@ -6,7 +6,7 @@ updated_at: "2026-11-23"
 feature_size: M
 stage: "04-05"
 ticket: "none (capstone F1)"
-target_surfaces: []  # filled in §4 — subset of: backend-service | web-frontend | mobile-app | desktop-app | cli | worker | library-sdk. Read (never re-derived) by api-forge/complete-sequence-diagrams/break-tasks/plan-tests/review-feature → _shared/surfaces.md
+target_surfaces: [cli]  # filled in §4 — subset of: backend-service | web-frontend | mobile-app | desktop-app | cli | worker | library-sdk. Read (never re-derived) by api-forge/complete-sequence-diagrams/break-tasks/plan-tests/review-feature → _shared/surfaces.md
 ---
 
 # Software Architecture Document — metric-computation (F1)
@@ -114,30 +114,36 @@ C4Context
 
 ## 4. Solution strategy
 
-<!-- 🎯 Навіщо: 3-4 СТРАТЕГІЧНІ СТОВПИ, з яких потім ростуть усі ADR. Без §4 кожен ADR    -->
-<!--           виглядає випадковим — нема зонтика. ⭐ Найгустіша секція — тут ADR-gate    -->
-<!--           спрацьовує майже завжди (рішення незворотні + мульти-модульні).            -->
-<!-- 📋 Що писати: спершу Target surface(s), потім 3-4 стратегічні вибори.                -->
-<!--           На кожен — заголовок + 2-3 речення rationale.                              -->
-<!-- 📌 ПЕРШЕ рішення §4 — Target surface(s): ЩО САМЕ будуємо. Записується у frontmatter   -->
-<!--           target_surfaces: [...] і гейтить §5 (один контейнер на поверхню) + усі       -->
-<!--           наступні стадії. Деривиться з PRD §1 «для кого» + §4 ролей. → _shared/surfaces.md -->
-<!-- 📌 Приклад: «Зберігати урок як таблицю блоків» — стовп, з якого виросло ADR-0001.    -->
-
-**Target surface(s) (the first decision — what's being built):** `<e.g. [backend-service, web-frontend]>`
-<!-- Mirror this list into the frontmatter `target_surfaces`. For each declared UI surface          -->
-<!-- (web-frontend / mobile-app / desktop-app) add a UI-architecture choice below (web → SSR/SPA/   -->
-<!-- hybrid; mobile → native/cross-platform). Multi-surface is usually an ADR (multi-module +       -->
-<!-- irreversible). The UI reuses the repo's existing design system / components / tokens from       -->
-<!-- architecture-map.md §Frontend — it does not design greenfield. → _shared/surfaces.md           -->
+**Target surface(s) (the first decision — what's being built):** `[cli]` — the `evidence-meter` command on
+the Lead's machine. The API keeps `/health` only, so sign-in stays deferred
+([ADR 0002](adr/0002-deliver-f1-as-cli-only-and-keep-api-health-only.md); closes PRD §8 open question 2).
+No UI surface, so no UI-architecture decision.
 
 **Top strategic choices (the seeds for ADRs):**
 
-1. **<e.g. Module isolation through events>** — <2-3 sentences rationale referencing Quality Goals and constraints>.
-2. **<e.g. Single-store persistence (Postgres)>** — <2-3 sentences>.
-3. **<e.g. UI-architecture: SPA consuming the backend API>** — <per declared UI surface; 2-3 sentences>.
+1. **Snapshot from an imported file, owned by Collection** — the tracker is not connected in F1; a snapshot
+   file is imported once into Collection's store and is immutable from then on. Keeps F1 offline and
+   credential-free, and tests use the same path as real runs (QG-1, offline NFR)
+   ([ADR 0001](adr/0001-import-synthetic-snapshot-file-until-collection-adapter-exists.md)).
+2. **Entrypoint orchestration with in-process events** — the compute command in `entrypoints/` asks
+   Definitions for the version and state map, asks Collection for the snapshot, maps both into
+   Computation's own input types and runs the use case; every refusal happens before anything is written
+   (QG-3). `MetricComputed` goes to an in-process dispatcher with no listeners in F1
+   ([ADR 0003](adr/0003-orchestrate-compute-in-entrypoints-with-in-process-events.md)).
+3. **Reproducibility by identity** — a snapshot is identified by the sha256 of its canonical content; a
+   measurement is unique on team, period, definition id, definition version and snapshot id. A re-run
+   compares with the stored measurement: a match records nothing and says so, a difference is reported as a
+   defect (QG-1, AC-03)
+   ([ADR 0004](adr/0004-identify-snapshots-by-content-hash-and-measurements-by-natural-key.md)).
+4. **Privacy by construction** — the import keeps issue keys, states and timestamps and drops assignee and
+   author fields, so no person data is stored; a test scans every output, and a person breakdown is refused
+   at the CLI (QG-2, AC-09) ([ADR 0005](adr/0005-drop-person-fields-at-snapshot-import.md)).
+5. **Pure formula core** (repo convention, no ADR) — pass extraction, state-map application and the median
+   are pure functions in `computation/domain/`, taking typed history and the state map as data; golden data
+   with hand-computed values is the proof (bc-map, structure per context).
 
-Each tactical decision in later sections should be traceable to one of these strategic seeds. Tactical decisions that *contradict* a strategic choice are red flags — surface them in §11 Risks.
+Each tactical decision in later sections should be traceable to one of these strategic seeds. Tactical
+decisions that *contradict* a strategic choice are red flags — surface them in §11 Risks.
 
 ## 5. Building block view
 
