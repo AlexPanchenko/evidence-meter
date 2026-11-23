@@ -77,34 +77,39 @@ they get §10 scenarios but do not override the three above.
 
 ## 3. Context and scope
 
-<!-- 🎯 Навіщо: малює КОРДОН СИСТЕМИ — хто з нею говорить ззовні, де закінчується зона довіри. -->
-<!--           Без §3 §5 і §8 (авторизація) розпливаються — неясно, що «всередині», а що «зовні». -->
-<!-- 📋 Що писати: 2-3 речення бізнес-контексту + таблиця зовнішніх систем + Mermaid C4Context. -->
-<!-- 📌 Приклад: «зовнішні — нема (свідома відмова від third-party у v1)» — це теж рішення.   -->
-<!-- Кордон довіри (trust boundary) — лінія, за якою ти не довіряєш даним без перевірки.       -->
-
-<Business context in 2-3 sentences. What the system does for whom.>
+F1 runs on the Lead's machine as the `evidence-meter` CLI. It takes a team's snapshot from an imported
+file and the definition version and state map from the private definitions file, and shows the Lead a
+measurement in the terminal, marked as not yet checked. The issue tracker is not connected in F1
+([ADR 0001](adr/0001-import-synthetic-snapshot-file-until-collection-adapter-exists.md)); Evidence Guard
+and Reporting are internal contexts of later features and receive nothing from F1 beyond the published
+`MetricComputed` event. Trust boundary: both files are outside the system and validated on read; nothing
+leaves the machine.
 
 **External systems (in / out):**
 
 | Actor or system | Type | Interaction |
 |---|---|---|
-| <e.g. IC> | Person | Creates goals, adds checkpoints |
-| <e.g. notification-service> | System (internal) | Receives cron registration |
-| <e.g. Identity Provider> | System (external) | Provides JWT tokens |
+| Lead | Person | Imports a snapshot, computes cycle time, reads the unchecked measurement in the terminal |
+| Snapshot file | External file (synthetic in the repo; a real export stays outside git) | Issues of one team with their state changes for one closed period; imported once, then immutable |
+| Private definitions file | External file outside git (`~/.config/evidence-meter/`) | Definition versions, retirements and per-team state maps; read at run time |
+| Issue tracker | External system, not connected in F1 | Source of real snapshots once Collection's adapter ships (a later feature) |
 
 **C4 Context (L1):**
 
 ```mermaid
 C4Context
-    title <system> — System Context
+    title Evidence Meter (F1 metric-computation) — System Context
 
-    Person(user, "<User>", "<role + intent>")
-    System(system, "<Our System>", "<one-sentence description>")
-    System_Ext(ext, "<External system>", "<one-sentence description>")
+    Person(lead, "Lead", "Runs the monthly computation for their teams")
+    System(em, "Evidence Meter", "Computes team metrics from versioned definitions; local CLI in F1")
+    System_Ext(snap, "Snapshot file", "One team's issue history for a closed period; synthetic in the repo")
+    System_Ext(defs, "Private definitions file", "Definition versions, retirements, state maps; outside git")
+    System_Ext(tracker, "Issue tracker", "Not connected in F1; read by Collection later")
 
-    Rel(user, system, "<interaction>", "<protocol>")
-    Rel(system, ext, "<interaction>", "<protocol>")
+    Rel(lead, em, "Imports snapshots, computes cycle time", "CLI")
+    Rel(em, snap, "Imports once", "file read")
+    Rel(em, defs, "Reads at run time", "file read")
+    Rel(em, tracker, "Reads issues (later feature)", "HTTPS")
 ```
 
 ## 4. Solution strategy
