@@ -290,22 +290,21 @@ SQLite file holds this comfortably, so no scaling threshold is set in F1. Revisi
 
 ## 8. Crosscutting concepts
 
-<!-- 🎯 Навіщо: НАСКРІЗНІ ПАТЕРНИ, які перетинають кілька модулів: логування, помилки,    -->
-<!--           авторизація, ID strategy, outbox, кеш. ⭐ Друга найгустіша секція.          -->
-<!--           Якщо патерн всередині одного модуля — він НЕ сюди. Якщо це конвенція        -->
-<!--           проєкту в цілому — у CLAUDE.md.                                              -->
-<!-- 📋 Що писати: таблиця концепт / конвенція / де визначено. Один рядок на концепт.      -->
-<!-- 📌 Приклад: «UUID v7 (час+випадковий, сортується) у app-layer» — як default з CLAUDE.md. -->
-
 | Concept | Convention | Where defined |
 |---|---|---|
-| Logging | <e.g. structured slog, fields `module=<name>`> | <CLAUDE.md §X or here> |
-| Authentication | <e.g. JWT via session middleware> | <CLAUDE.md §X> |
-| Error handling | <e.g. domain sentinel → ports/errors.go → apperr JSON> | <CLAUDE.md §X> |
-| ID strategy | <e.g. UUID v7 in app layer> | <CLAUDE.md §X> |
-| Internationalisation | <e.g. N/A, English only> | — |
-| Observability | <e.g. OpenTelemetry on HTTP boundaries> | — |
-| Outbox / events | <module-specific patterns, if any> | <here> |
+| Logging | Standard-library `logging` to stderr only, no log file; never a person field; private state names and definition codes appear only in the Lead's terminal output | here |
+| Authentication | None: local CLI, the API stays `/health` only | [repo ADR 0004](../../adr/0004-auth-oidc-deferred.md), [ADR 0002](adr/0002-deliver-f1-as-cli-only-and-keep-api-health-only.md) |
+| Capability rule | Team-level only; any breakdown other than team is refused with `person_breakdown` (AC-09) | AGENTS.md, here |
+| Error and refusal model | A refusal is a `Refusal(code, message, details)` result from `shared/`, never an exception; closed code list: `definitions_missing`, `version_retired`, `snapshot_missing`, `unmapped_states`, `period_not_closed`, `person_breakdown`, `rerun_differs`; the CLI exits non-zero; unexpected failures stay exceptions | [ADR 0007](adr/0007-return-refusals-as-typed-results-with-stable-codes.md) |
+| ID strategy | Snapshot id = sha256 of its canonical content; measurement unique on team, period, definition id, definition version, snapshot id | [ADR 0004](adr/0004-identify-snapshots-by-content-hash-and-measurements-by-natural-key.md) |
+| Time and period | Timestamps normalised to UTC at import; a period is a UTC calendar month; a pass counts in the month of its done | [ADR 0008](adr/0008-use-utc-calendar-months-for-periods.md) |
+| Transactions | One SQLite transaction per write command; every check runs before the first write (all-or-nothing) | here |
+| Events | Event types in `shared/events.py`; in-process dispatcher in `entrypoints/dispatch.py`; `MetricComputed` has no listeners in F1 | [ADR 0003](adr/0003-orchestrate-compute-in-entrypoints-with-in-process-events.md) |
+| Offline | No network import in Collection, Definitions or Computation; a test blocks sockets during compute | PRD §6, here |
+| Privacy | Person fields dropped at snapshot import; a test scans command output, records and logs for person fields | [ADR 0005](adr/0005-drop-person-fields-at-snapshot-import.md) |
+| Configuration | `platform/config.py`: `EVIDENCE_METER_DB` (exists) and `EVIDENCE_METER_DEFINITIONS` (path to the private TOML file, default under `~/.config/evidence-meter/`) | here |
+| Internationalisation | English only | — |
+| Observability | None beyond the run-time test in §10; local CLI | §7 |
 
 ## 9. Architecture decisions
 
