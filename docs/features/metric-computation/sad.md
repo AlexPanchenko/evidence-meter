@@ -147,49 +147,65 @@ decisions that *contradict* a strategic choice are red flags — surface them in
 
 ## 5. Building block view
 
-<!-- 🎯 Навіщо: ВНУТРІШНЯ ДЕКОМПОЗИЦІЯ — модулі, контейнери, БД. Статична топологія:   -->
-<!--           хто з ким може говорити. Без §5 §6 (сценарії) не має словника учасників. -->
-<!-- 📋 Що писати: 1 абзац про стиль (шари/гексагональна/clean/на подіях) +            -->
-<!--           дерево папок + Mermaid C4Container.                                       -->
-<!-- 📌 ОДИН Container на кожну оголошену target_surface (frontmatter): fullstack        -->
-<!--           [backend-service, web-frontend] = backend-API container + web/SPA container; -->
-<!--           [backend-service, mobile-app] = API + mobile app. Container(web, …) нижче — -->
-<!--           лише приклад однієї поверхні; додай/заміни під оголошене у §4. → _shared/surfaces.md -->
-<!-- 📌 Приклад: «web-app, content-api, media-worker, postgres, s3, cdn».                -->
-
-<One paragraph: layered / hexagonal / clean / event-driven. Why.>
+Modular monolith in one Python process, following the repo: contexts are packages wired only in
+`entrypoints/`; Computation is `domain/` → `app/` → `infra/`, the other contexts `handler/` → `service/`
+→ `repo/` ([repo ADR 0002](../../adr/0002-modular-monolith.md)). F1 crosses three contexts (Collection,
+Definitions, Computation) plus `shared`, `platform` and `entrypoints`; Evidence Guard and Reporting are not
+touched. Each context owns its tables in the one SQLite file, prefixed by its name
+([ADR 0006](adr/0006-prefix-tables-by-owning-context-in-one-sqlite-file.md)). The private definitions file
+is TOML, read with the standard library's `tomllib` (no new dependency, comments allowed for a file the Lead
+edits by hand).
 
 **Internal decomposition:**
 
 ```
-<e.g. internal/modules/goals/>
-├── domain/       <entities + sentinel errors>
-├── app/          <use cases / services>
-├── infra/        <repository + outbox impl>
-├── ports/        <HTTP handlers, DTOs, error mapping>
-└── module.go     <self-wiring>
+src/evidence_meter/
+├── shared/          Team, Period, MetricComputed (event type)
+├── platform/        config.py (env), db.py (one SQLite connection helper), migrate.py (exists)
+├── collection/
+│   ├── handler/     import a snapshot file; get a snapshot by team and period
+│   ├── service/     parse and validate, drop person fields, canonicalise, sha256 id
+│   └── repo/        collection_* tables
+├── definitions/
+│   ├── handler/     resolve a definition version and a team's state map
+│   ├── service/     published vs retired, current version
+│   └── repo/        private TOML file reader (tomllib)
+├── computation/
+│   ├── domain/      passes, state-map application, median, refusal reasons (pure, stdlib + shared)
+│   ├── app/         compute use case; ports: MeasurementStore
+│   └── infra/       computation_* tables
+└── entrypoints/
+    ├── cli.py       `snapshot import`, `compute cycle-time`; maps context results to Computation inputs
+    └── dispatch.py  in-process event dispatcher (no listeners in F1)
 ```
 
 **C4 Container (L2):**
 
 ```mermaid
 C4Container
-    title <system> — Containers
+    title Evidence Meter (F1 metric-computation) — Containers
 
-    Person(user, "<User>")
+    Person(lead, "Lead", "Runs the monthly computation for their teams")
 
-    Container_Boundary(boundary, "<Our System>") {
-        Container(web, "<Web/API container>", "<technology>", "<purpose>")
-        Container(svc, "<Service container>", "<technology>", "<purpose>")
-        ContainerDb(db, "<DB>", "<technology>", "<purpose>")
+    Container_Boundary(em, "Evidence Meter") {
+        Container(cli, "CLI (entrypoints)", "Python, argparse", "Commands; orchestrates a run; in-process events")
+        Container(collection, "Collection", "Python package", "Imports, validates and stores immutable snapshots")
+        Container(definitions, "Definitions", "Python package", "Resolves definition versions, retirements, state maps")
+        Container(computation, "Computation", "Python package", "Pure cycle-time formula; records measurements")
+        ContainerDb(db, "Local database", "SQLite", "collection_* and computation_* tables, schema_migrations")
     }
 
-    System_Ext(ext, "<External>", "<purpose>")
+    System_Ext(snap, "Snapshot file", "Synthetic issue history for one team and period")
+    System_Ext(defs, "Private definitions file", "TOML outside git")
 
-    Rel(user, web, "<interaction>", "<protocol>")
-    Rel(web, svc, "<service calls>")
-    Rel(svc, db, "<reads/writes>", "<driver>")
-    Rel(svc, ext, "<emits>", "<protocol>")
+    Rel(lead, cli, "Imports snapshots, computes cycle time", "terminal")
+    Rel(cli, collection, "Import, get snapshot", "function call")
+    Rel(cli, definitions, "Resolve version and state map", "function call")
+    Rel(cli, computation, "Compute with mapped inputs", "function call")
+    Rel(collection, snap, "Reads once", "file")
+    Rel(definitions, defs, "Reads each run", "tomllib")
+    Rel(collection, db, "Writes and reads collection_*", "sqlite3")
+    Rel(computation, db, "Writes and reads computation_*", "sqlite3")
 ```
 
 ## 6. Runtime view
