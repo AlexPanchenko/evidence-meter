@@ -3,7 +3,7 @@ status: Confirmed
 owner: "capstone owner"
 reviewers: []
 updated_at: "2026-11-23"
-feature_size: TBD     # set by sdlc:classify-size, not here
+feature_size: M     # set by sdlc:classify-size 2026-11-23
 stage: "01"
 depth: hard
 ticket: "none (capstone F1)"

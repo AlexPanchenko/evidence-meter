@@ -44,3 +44,7 @@ web/dist/
 .DS_Store
 .idea/
 .vscode/
+
+# Per-developer SDLC plugin settings and agent worktrees
+.claude/*.local.md
+.worktrees/
