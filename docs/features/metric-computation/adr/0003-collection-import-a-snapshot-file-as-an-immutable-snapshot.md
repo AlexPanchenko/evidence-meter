@@ -61,6 +61,6 @@ snapshots (bc-map), and lets later tracker adapters write into the same tables.
 
 ## Links
 
-- PRD: [[../../PRD.md]] §8 (open question 1), AC-03, AC-07
+- PRD: [[../PRD.md]] §8 (open question 1), AC-03, AC-07
 - SAD: [[../sad.md]] §4, §5, §8
 - Related ADR: [[0004-collection-drop-person-fields-at-import]]; [[0008-computation-key-measurements-by-every-input]]

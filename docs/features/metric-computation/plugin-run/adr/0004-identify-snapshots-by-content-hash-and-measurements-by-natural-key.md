@@ -48,6 +48,6 @@ AC-03 and the reproducibility NFR require a re-run with the same snapshot and de
 
 ## Links
 
-- PRD: [[../PRD.md]] §5 AC-03, §6 (reproducibility)
+- PRD: [[../../PRD.md]] §5 AC-03, §6 (reproducibility)
 - SAD: [[../sad.md]] §4, §8 (ID strategy)
 - Related ADR: [[0001-import-synthetic-snapshot-file-until-collection-adapter-exists]]; [[0003-orchestrate-compute-in-entrypoints-with-in-process-events]]

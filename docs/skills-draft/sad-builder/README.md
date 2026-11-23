@@ -16,9 +16,9 @@ What changed against the plugin is listed at the end of `SKILL.md`.
 ## Run: comparison with the plugin's architecture-design
 
 Same feature (`metric-computation`): the plugin's architecture-design at medium depth gave
-[sad.md](../../features/metric-computation/sad.md) with 8 ADRs (3776 words; the critic found 6 issues, among
+[plugin-run/sad.md](../../features/metric-computation/plugin-run/sad.md) with 8 ADRs (3776 words; the critic found 6 issues, among
 them the state map missing from the measurement key); sad-builder at easy depth, in a fresh session that did
-not read the plugin's SAD, gave [sad-builder/sad.md](../../features/metric-computation/sad-builder/sad.md)
+not read the plugin's SAD, gave [sad.md](../../features/metric-computation/sad.md)
 with 9 context-prefixed ADRs (4208 words). Both reached the same strategy (CLI only, entrypoint
 orchestration, file import, person fields dropped at import, UTC months, typed refusals), so the difference
 is in the details the plugin left to its critic.
@@ -37,4 +37,5 @@ repository's practice sad-builder's SAD is the closer fit.
 
 ## Changed after the run
 
-Nothing yet.
+The sad-builder SAD was promoted as F1's canonical `sad.md` + `adr/`; the plugin's run moved to
+`plugin-run/` as evidence. AC-03 stays a defect (own exit code), not a refusal code. The skill itself is unchanged.

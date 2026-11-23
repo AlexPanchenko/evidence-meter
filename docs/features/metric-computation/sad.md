@@ -6,217 +6,208 @@ updated_at: "2026-11-23"
 feature_size: M
 stage: "04-05"
 ticket: "none (capstone F1)"
-target_surfaces: [cli]  # filled in §4 — subset of: backend-service | web-frontend | mobile-app | desktop-app | cli | worker | library-sdk. Read (never re-derived) by api-forge/complete-sequence-diagrams/break-tasks/plan-tests/review-feature → _shared/surfaces.md
+target_surfaces: [cli]
 ---
 
 # Software Architecture Document — metric-computation (F1)
 
-<!-- Stages 04-05 → see sdlc/plugin/skills/architecture-design/SKILL.md -->
-<!-- 12 Arc42 sections. Empty sections — <!-- N/A: <one-line reason> -->. -->
-<!-- C4 Context (L1) lives inline in §3. C4 Container (L2) lives inline in §5. -->
-<!-- §6 Runtime view seeds the primary flow(s) here; complete-sequence-diagrams (stage 06) then -->
-<!--    fills §6 with every critical flow / §5 AC — no cap. -->
-<!-- Numbers in §10 come VERBATIM from PRD §6 NFR — no inventing, no rounding. -->
+> Comparison run of the `sad-builder` skill (depth easy). Inputs: [PRD](PRD.md) ·
+> [CONTEXT](CONTEXT.md) · [architecture map](../../architecture-map.md) · [bc-map](../../bc-map.md).
+> Feature ADRs ("F1 ADR NNNN") are in [adr/](adr/); repo-wide ones ("repo ADR NNNN") in
+> [docs/adr/](../../adr/).
 
 ## 1. Introduction and goals
 
-**Intent.** F1 lets a Lead compute one metric, cycle time (the median duration of the passes a team finished
-in a period), for one team and one closed period, without counting by hand. Every value is recorded with
-its definition id and version, the state map and the inputs it used, and computing it again gives the same
-result. When the data cannot support a value, the Lead gets a plain reason, never a zero or a misleading
-number. The core is built so that running it over all teams later is cheap (PRD §1, §2).
+**Intent.** A Lead counts engineering metrics by hand from the written guide, which takes hours per team per
+month. F1 lets the Lead name one team and one closed period on the command line and get the first metric,
+cycle time, as a Measurement stamped with the definition id, the definition version, the state map and the
+inputs it used. Until Evidence Guard exists the Lead sees the value marked as not yet checked; it never
+reaches the monthly page. Committed approach (PRD §1): **One team, one number**, with a core that makes
+running over all teams cheap later.
 
-**Top-3 quality goals (1-liners; full scenarios in §10):**
+**Top-3 quality goals (scenarios in §10):**
 
-1. **Reproducibility** — the same snapshot and definition version always give an identical value and inputs.
-2. **Team-level only** — no value, field or log line per person, anywhere.
-3. **Honest refusal, all-or-nothing** — a refused or failed run records nothing and gives a plain reason.
+1. **Reproducibility** — a re-run gives a 100% identical value and inputs (PRD §6, US-03).
+2. **Team-level only** — 0 per-person fields in command output, records or logs (PRD §6, §6.1, AC-09).
+3. **All-or-nothing** — 0 partial records after a refused or failed run (PRD §6, every refusal AC).
 
-Run time (≤ 10 s for 5,000 issues) and offline computation (0 network calls) are quality requirements too;
-they get §10 scenarios but do not override the three above.
+Run time (5,000 issues) and Offline (0 network calls) get §10 scenarios too; they do not override the three.
+
+**Decision overrides** (critic resolution):
+- `shared` carries more than `Team`, `Period` and event types — overridden, rationale: F1 ADR 0002 passes plain
+  records (snapshot, definition version, state map) and `Refusal` with its code list between contexts through
+  `entrypoints/`; they hold data only, no context logic. ARCHITECTURE.md Layout and the `shared/__init__.py`
+  docstring need the same wording (§11).
 
 **Stakeholders.**
 
 | Role | Interest | Sign-off owner? |
 |---|---|---|
-| Lead | Runs the computation for their teams, reads the unchecked measurement | No |
-| Engineering manager | Reads values later on the reviewed monthly page (Reporting); no F1 output | No |
+| Lead | Gets a team's cycle time without counting by hand; sees what made it and why a value is missing | No |
 | Tech Lead | Approves this SAD | Yes |
-| Security Lead | Review required: size M, person data present in the snapshot (PRD §6.1) | Yes |
-
-<!-- Decision overrides (¶4) — populated by the Step-7 critic resolution loop, empty otherwise. -->
+| Security Lead | Size M and a new boundary around person data in the snapshot (PRD §6.1 "Security review: Required") | Yes |
 
 ## 2. Constraints
 
 **Technical.**
-- Python 3.12 with uv; standard library first. A new dependency needs the owner's OK and a licence and
-  maintenance check (AGENTS.md).
-- SQLite through the standard `sqlite3` module; plain SQL migrations `migrations/NNNN_<name>.up.sql` /
-  `.down.sql` applied by `platform/migrate.py` ([repo ADR 0003](../../adr/0003-persistence-sqlite.md)).
-- Modular monolith: five contexts, wired only in `entrypoints/`; the dependency rule is enforced by
-  `tests/test_architecture.py` ([repo ADR 0002](../../adr/0002-modular-monolith.md)). Computation `domain`
+- Python 3.12 with uv; standard library first; a new dependency needs the owner's OK (AGENTS.md). F1 adds
+  none: JSON through `json`, TOML through `tomllib`.
+- SQLite via `sqlite3`; migrations `NNNN_<name>.up/.down.sql` by `platform/migrate.py` (repo ADR 0003).
+- Modular monolith, dependency rule in `tests/test_architecture.py` (repo ADR 0002); Computation `domain`
   imports only the standard library and `shared`.
-- CLI on argparse (`entrypoints/cli.py`); FastAPI exists with `/health` only and binds to 127.0.0.1 until
-  OIDC sign-in ships ([repo ADR 0004](../../adr/0004-auth-oidc-deferred.md)).
+- argparse CLI (repo ADR 0001); the API and web dev server bind to 127.0.0.1 until OIDC (repo ADR 0004).
 
 **Organisational.**
-- One developer (the capstone owner), AI-assisted.
-- Design in week 1 (S7-S8, until 2026-11-26); implementation in week 2 (S9, 2026-11-27 to 2026-12-03).
+- One person builds the tool; the capstone gives a fixed delivery window this month (PRD §1).
 
 **Conventions.**
-- [AGENTS.md](../../../AGENTS.md), [ARCHITECTURE.md](../../../ARCHITECTURE.md), [bc-map](../../bc-map.md)
-  (contexts, events, glossary), [architecture-map](../../architecture-map.md) (current code).
-- Failing test first; every metric gets golden data with expected values computed by hand.
+- AGENTS.md, ARCHITECTURE.md, bc-map, architecture-map; failing test first; golden data with expected
+  values computed by hand; `make check` before each commit.
 
 **Regulatory / external.**
-- The repository is public: synthetic data only in code, tests, fixtures and docs. An organisation's metric
-  codes, thresholds and state names live in the private definitions file outside git
-  (`~/.config/evidence-meter/`), read only by `definitions/`.
-- Results are team-level only; nothing per person in outputs, records or logs (SPEC non-goals).
-- The snapshot may carry assignees and authors, so a security review is required (PRD §6.1).
+- Public repository: synthetic data only; private definitions outside git, read only by Definitions.
+- Team-level only; the snapshot may carry assignees and authors, F1 reads states and timestamps only and
+  outputs no field per person (PRD §6.1).
 
 ## 3. Context and scope
 
-F1 runs on the Lead's machine as the `evidence-meter` CLI. It takes a team's snapshot from an imported
-file and the definition version and state map from the private definitions file, and shows the Lead a
-measurement in the terminal, marked as not yet checked. The issue tracker is not connected in F1
-([ADR 0001](adr/0001-import-synthetic-snapshot-file-until-collection-adapter-exists.md)); Evidence Guard
-and Reporting are internal contexts of later features and receive nothing from F1 beyond the published
-`MetricComputed` event. Trust boundary: both files are outside the system and validated on read; nothing
-leaves the machine.
+In F1 Evidence Meter computes one metric, cycle time, for one team and one closed period, on the Lead's
+own machine. It reads the Lead's private definitions file and a snapshot file of one team's issue history;
+the issue tracker and Git hosting are connected by later Collection features. Trust boundary: everything
+runs locally; the only person data that enters is inside the snapshot file.
 
 **External systems (in / out):**
 
 | Actor or system | Type | Interaction |
 |---|---|---|
-| Lead | Person | Imports a snapshot, computes cycle time, reads the unchecked measurement in the terminal |
-| Snapshot file | External file (synthetic in the repo; a real export stays outside git) | Issues of one team with their state changes for one closed period; imported once, then immutable |
-| Private definitions file | External file outside git (`~/.config/evidence-meter/`) | Definition versions, retirements and per-team state maps; read at run time |
-| Issue tracker | External system, not connected in F1 | Source of real snapshots once Collection's adapter ships (a later feature) |
+| Lead | Person | Imports a snapshot, computes cycle time, reads the measurement or the refusal in the terminal |
+| Private definitions file | External file outside git | Definition versions, retirements and per-team state maps; read at run time, never written |
+| Snapshot file | External file (synthetic in the repo, local elsewhere) | One team's issue state history for one closed period; read once at import |
+| Issue tracker | External system, later feature | Not connected in F1 |
+| Git hosting | External system, later feature | Not connected in F1 |
 
 **C4 Context (L1):**
 
 ```mermaid
 C4Context
-    title Evidence Meter (F1 metric-computation) — System Context
+    title Evidence Meter (metric-computation) — System Context
 
     Person(lead, "Lead", "Runs the monthly computation for their teams")
-    System(em, "Evidence Meter", "Computes team metrics from versioned definitions; local CLI in F1")
-    System_Ext(snap, "Snapshot file", "One team's issue history for a closed period; synthetic in the repo")
-    System_Ext(defs, "Private definitions file", "Definition versions, retirements, state maps; outside git")
-    System_Ext(tracker, "Issue tracker", "Not connected in F1; read by Collection later")
+    System(em, "Evidence Meter", "Computes a team's cycle time from a versioned definition")
+    System_Ext(snap, "Snapshot file", "One team's issue history for a closed period")
+    System_Ext(defs, "Private definitions file", "Definition versions and state maps; outside git")
+    System_Ext(tracker, "Issue tracker", "Not connected in F1")
+    System_Ext(git, "Git hosting", "Not connected in F1")
 
-    Rel(lead, em, "Imports snapshots, computes cycle time", "CLI")
+    Rel(lead, em, "Imports a snapshot, computes cycle time", "CLI")
     Rel(em, snap, "Imports once", "file read")
     Rel(em, defs, "Reads at run time", "file read")
     Rel(em, tracker, "Reads issues (later feature)", "HTTPS")
+    Rel(em, git, "Reads history (later feature)", "git")
 ```
 
 ## 4. Solution strategy
 
-**Target surface(s) (the first decision — what's being built):** `[cli]` — the `evidence-meter` command on
-the Lead's machine. The API keeps `/health` only, so sign-in stays deferred
-([ADR 0002](adr/0002-deliver-f1-as-cli-only-and-keep-api-health-only.md); closes PRD §8 open question 2).
-No UI surface, so no UI-architecture decision.
+**Target surface(s):** `[cli]` — F1 stays on the Lead's machine; an API route would make F1 the first
+data-serving feature and bring OIDC sign-in (repo ADR 0004). Closes PRD open question 2
+([F1 ADR 0001](adr/0001-entrypoints-serve-f1-through-the-cli-only.md)).
 
-**Top strategic choices (the seeds for ADRs):**
+**Strategic choices:**
 
-1. **Snapshot from an imported file, owned by Collection** — the tracker is not connected in F1; a snapshot
-   file is imported once into Collection's store and is immutable from then on. Keeps F1 offline and
-   credential-free, and tests use the same path as real runs (QG-1, offline NFR)
-   ([ADR 0001](adr/0001-import-synthetic-snapshot-file-until-collection-adapter-exists.md)).
-2. **Entrypoint orchestration with in-process events** — the compute command in `entrypoints/` asks
-   Definitions for the version and state map, asks Collection for the snapshot, maps both into
-   Computation's own input types and runs the use case; every refusal happens before anything is written
-   (QG-3). `MetricComputed` goes to an in-process dispatcher with no listeners in F1
-   ([ADR 0003](adr/0003-orchestrate-compute-in-entrypoints-with-in-process-events.md)).
-3. **Reproducibility by identity** — a snapshot is identified by the sha256 of its canonical content; a
-   measurement is unique on team, period, definition id, definition version, snapshot id and state-map
-   digest (the sha256 of the team's state map as used), so editing a state map yields a new measurement,
-   not a false defect. Compute uses the latest imported snapshot for the team and period unless the Lead
-   names an older snapshot id. A re-run compares with the stored measurement: a match records nothing and
-   says so, a difference is reported as a defect (QG-1, AC-03)
-   ([ADR 0004](adr/0004-identify-snapshots-by-content-hash-and-measurements-by-natural-key.md)).
-4. **Privacy by construction** — the import keeps issue keys, states and timestamps and drops assignee and
-   author fields, so no person data is stored; a test scans every output, and a person breakdown is refused
-   at the CLI (QG-2, AC-09) ([ADR 0005](adr/0005-drop-person-fields-at-snapshot-import.md)).
-5. **Pure formula core** (repo convention, no ADR) — pass extraction, state-map application and the median
-   are pure functions in `computation/domain/`, taking typed history and the state map as data; golden data
-   with hand-computed values is the proof (bc-map, structure per context).
+1. **Orchestrate one run in the CLI, with shared types and in-process events** — the `compute` command in
+   `entrypoints/` asks Definitions for the version and state map, Collection for the snapshot, then
+   Computation for the measurement, passing plain `shared` types; F1 defines `shared/events.py` and publishes
+   `TrackerSnapshotCollected` and `MetricComputed` to an in-process dispatcher with no listener yet. Serves
+   all-or-nothing: every check runs before the first write
+   ([F1 ADR 0002](adr/0002-entrypoints-orchestrate-a-run-with-shared-types.md)).
+2. **Import a snapshot file into an immutable stored snapshot** — Collection's `import` command reads one
+   JSON snapshot file, stores it in `collection_*` tables with a SHA-256 hash of its canonical form; an
+   identical re-import is a no-op, a different file for the same team and period is a new snapshot, and
+   compute uses the latest. Closes PRD open question 1; serves reproducibility
+   ([F1 ADR 0003](adr/0003-collection-import-a-snapshot-file-as-an-immutable-snapshot.md)).
+3. **Drop person fields at import** — Collection keeps issue key, state transitions and timestamps only;
+   assignees and authors never reach SQLite, logs or Computation. Serves team-level only
+   ([F1 ADR 0004](adr/0004-collection-drop-person-fields-at-import.md)).
 
-Each tactical decision in later sections should be traceable to one of these strategic seeds. Tactical
-decisions that *contradict* a strategic choice are red flags — surface them in §11 Risks.
+Later tactical decisions trace to one of these; a contradiction is a §11 risk.
 
 ## 5. Building block view
 
-Modular monolith in one Python process, following the repo: contexts are packages wired only in
-`entrypoints/`; Computation is `domain/` → `app/` → `infra/`, the other contexts `handler/` → `service/`
-→ `repo/` ([repo ADR 0002](../../adr/0002-modular-monolith.md)). F1 crosses three contexts (Collection,
-Definitions, Computation) plus `shared`, `platform` and `entrypoints`; Evidence Guard and Reporting are not
-touched. Each context owns its tables in the one SQLite file, prefixed by its name
-([ADR 0006](adr/0006-prefix-tables-by-owning-context-in-one-sqlite-file.md)). The private definitions file
-is TOML, read with the standard library's `tomllib` (no new dependency, comments allowed for a file the Lead
-edits by hand).
+Modular monolith, one package per context (repo ADR 0002). F1 touches three contexts and wires them only in
+`entrypoints/` (F1 ADR 0002): Definitions reads the private file, Collection imports and serves the
+snapshot, Computation applies the state map in `app/` and the pure formula in `domain/`, then records the
+measurement in `infra/`. No context imports another; records cross the boundary as `shared` types.
+
+**Context touch list:**
+
+| Part | Changes | Tables (prefix) | Events published / consumed |
+|---|---|---|---|
+| `shared` | `Team`, `Period`, `Refusal` with its code list, snapshot and definition records, `events.py` | — | defines `TrackerSnapshotCollected`, `MetricComputed` |
+| `platform` | new `config.py` (`EVIDENCE_METER_DB`, `EVIDENCE_METER_DEFINITIONS`), new `db.py` (connection, one transaction per command) | — | — |
+| Collection | `handler/` import command, `service/` allow-list and canonical hash, `repo/` snapshot store | `collection_snapshots`, `collection_issue_transitions` | publishes `TrackerSnapshotCollected` |
+| Definitions | `handler/` lookup, `service/` validation and hashing of version and state map, `repo/` TOML reader | none | none in F1 (§11 debt) |
+| Computation | `domain/` passes, median, cycle-time formula, period rule; `app/` compute use case; `infra/` measurement store | `computation_measurements`, `computation_state_maps` | publishes `MetricComputed` |
+| `entrypoints` | `cli.py` `import` and `compute`; in-process dispatcher | — | dispatches both events (no listener yet) |
+| `migrations/` | `0002_collection_snapshots`, `0003_computation_measurements` (columns: `generate-data-model`) | — | — |
+| Evidence Guard, Reporting, API, web | not touched | — | — |
 
 **Internal decomposition:**
 
 ```
 src/evidence_meter/
-├── shared/          Team, Period, MetricComputed (event type)
-├── platform/        config.py (env), db.py (one SQLite connection helper), migrate.py (exists)
-├── collection/
-│   ├── handler/     import a snapshot file; get a snapshot by team and period
-│   ├── service/     parse and validate, drop person fields, canonicalise, sha256 id
-│   └── repo/        collection_* tables
-├── definitions/
-│   ├── handler/     resolve a definition version and a team's state map
-│   ├── service/     published vs retired, current version
-│   └── repo/        private TOML file reader (tomllib)
-├── computation/
-│   ├── domain/      passes, state-map application, median, refusal reasons (pure, stdlib + shared)
-│   ├── app/         compute use case; ports: MeasurementStore
-│   └── infra/       computation_* tables
-└── entrypoints/
-    ├── cli.py       `snapshot import`, `compute cycle-time`; maps context results to Computation inputs
-    └── dispatch.py  in-process event dispatcher (no listeners in F1)
+├── shared/                   Team, Period, Refusal codes, records, events
+├── platform/config.py, db.py env settings; connection and transaction helper
+├── collection/handler/       import a snapshot file; get the latest snapshot for team + period
+├── collection/service/       allow-list of fields, canonical form, SHA-256 hash
+├── collection/repo/          collection_* tables
+├── definitions/handler/      current or named version; team state map
+├── definitions/service/      validate, retired check data, hash version and state map
+├── definitions/repo/         read the TOML file with tomllib
+├── computation/domain/       passes from abstract transitions, median, cycle time; closed-period rule
+├── computation/app/          compute use case: checks, state-map coverage, key lookup, record
+├── computation/infra/        computation_measurements, computation_state_maps (each map used, by hash)
+└── entrypoints/cli.py        import, compute; dispatcher
 ```
 
 **C4 Container (L2):**
 
 ```mermaid
 C4Container
-    title Evidence Meter (F1 metric-computation) — Containers
+    title Evidence Meter (metric-computation) — Containers
 
     Person(lead, "Lead", "Runs the monthly computation for their teams")
 
     Container_Boundary(em, "Evidence Meter") {
-        Container(cli, "CLI (entrypoints)", "Python, argparse", "Commands; orchestrates a run; in-process events")
-        Container(collection, "Collection", "Python package", "Imports, validates and stores immutable snapshots")
-        Container(definitions, "Definitions", "Python package", "Resolves definition versions, retirements, state maps")
-        Container(computation, "Computation", "Python package", "Pure cycle-time formula; records measurements")
-        ContainerDb(db, "Local database", "SQLite", "collection_* and computation_* tables, schema_migrations")
+        Container(cli, "CLI (entrypoints)", "Python, argparse", "import and compute; orchestrates a run; dispatches events")
+        Container(definitions, "Definitions", "Python package", "Definition versions, retirements, state maps")
+        Container(collection, "Collection", "Python package", "Imports and serves immutable snapshots")
+        Container(computation, "Computation", "Python package", "State-map coverage, pure formula, measurements")
+        ContainerDb(db, "Local database", "SQLite", "collection_* and computation_* tables")
     }
 
-    System_Ext(snap, "Snapshot file", "Synthetic issue history for one team and period")
     System_Ext(defs, "Private definitions file", "TOML outside git")
+    System_Ext(snap, "Snapshot file", "JSON, one team and one period")
 
-    Rel(lead, cli, "Imports snapshots, computes cycle time", "terminal")
-    Rel(cli, collection, "Import, get snapshot", "function call")
-    Rel(cli, definitions, "Resolve version and state map", "function call")
-    Rel(cli, computation, "Compute with mapped inputs", "function call")
-    Rel(collection, snap, "Reads once", "file")
-    Rel(definitions, defs, "Reads each run", "tomllib")
-    Rel(collection, db, "Writes and reads collection_*", "sqlite3")
-    Rel(computation, db, "Writes and reads computation_*", "sqlite3")
+    Rel(lead, cli, "Runs import and compute", "terminal")
+    Rel(cli, definitions, "Get version and state map", "function call")
+    Rel(cli, collection, "Import; get latest snapshot", "function call")
+    Rel(cli, computation, "Compute with snapshot, version, state map", "function call")
+    Rel(definitions, defs, "Reads at run time", "tomllib")
+    Rel(collection, snap, "Reads once at import", "json")
+    Rel(collection, db, "Reads and writes collection_*", "sqlite3")
+    Rel(computation, db, "Reads and writes computation_*", "sqlite3")
 ```
 
 ## 6. Runtime view
 
-Seed flows from architecture-design; `complete-sequence-diagrams` adds the remaining flows (snapshot import,
-person-breakdown refusal, reopened passes, period not closed) and the AC → flow coverage table. Participant
-names are the §5 containers; messages are semantic, the command syntax comes with the CLI contract.
+Seed flows: the happy path with its re-run, and the flow with every refusal. Checks run in a fixed order,
+cheapest and without I/O first, and all of them before the first write (F1 ADR 0002): per-person breakdown,
+period closed ([F1 ADR 0006](adr/0006-shared-store-utc-and-close-periods-by-utc-month.md)), definitions
+file, retired version, snapshot, state-map coverage. Refusals travel as typed results
+([F1 ADR 0007](adr/0007-shared-return-refusals-as-typed-results.md)). `/sdlc:complete-sequence-diagrams`
+adds the import flow and the coverage table.
 
-**Critical flow 1: compute cycle time and re-run (AC-01, AC-02, AC-03)**
+**Critical flow 1: compute and re-run (AC-01, AC-01b, AC-02, AC-03, AC-08)**
 
 ```mermaid
 sequenceDiagram
@@ -226,30 +217,31 @@ sequenceDiagram
     participant Collection
     participant Computation
     participant DB as Local database
-    Lead->>CLI: compute cycle time for team-alpha, 2026-10
-    CLI->>Definitions: resolve current cycle-time version and team-alpha state map
-    Definitions-->>CLI: definition id, version 1, state map
-    CLI->>Collection: get the latest closed snapshot for team-alpha, 2026-10 (or a named snapshot id)
-    Collection->>DB: read collection_* rows
-    Collection-->>CLI: snapshot id, issues with state changes
-    CLI->>Computation: compute with mapped inputs
-    Computation->>Computation: derive passes, apply state map, take the median (pure)
-    Computation->>DB: look up measurement by team, period, definition, version, snapshot id, state-map digest
-    alt no earlier measurement
-        Computation->>DB: insert measurement (one transaction)
-        Computation-->>CLI: recorded measurement
-        CLI->>CLI: publish MetricComputed (in-process, no listeners in F1)
-        CLI-->>Lead: value marked not yet checked, definition id and version, state map, snapshot id, passes counted, issues excluded
-    else identical earlier measurement
-        Computation-->>CLI: matches the earlier measurement, nothing recorded
-        CLI-->>Lead: same value and inputs, says it matches the earlier measurement
-    else different earlier measurement
-        Computation-->>CLI: refused: rerun_differs, nothing recorded
-        CLI-->>Lead: defect reported, neither value shown
+
+    Lead->>CLI: compute cycle-time --team team-alpha --period 2026-10 [--version N]
+    CLI->>Definitions: current version and state map for team-alpha
+    Definitions-->>CLI: version 1 and state map, each with its hash
+    CLI->>Collection: latest snapshot for team-alpha, 2026-10
+    Collection->>DB: read collection_*
+    Collection-->>CLI: snapshot hash and state transitions
+    CLI->>Computation: compute(snapshot, version, state map, period)
+    Computation->>Computation: map states, build passes (a reopen starts a pass), median of passes done in 2026-10
+    Computation->>DB: find measurement by key
+    alt no measurement with this key
+        Computation->>DB: insert measurement and its state map if new (one transaction)
+        Computation-->>CLI: new measurement
+        CLI->>CLI: dispatch MetricComputed (no listener yet)
+        CLI-->>Lead: value or "no finished passes", definition id and version, state map, passes, excluded; "not yet checked by Evidence Guard"
+    else same key, same value and inputs
+        Computation-->>CLI: matches the earlier measurement
+        CLI-->>Lead: identical value and inputs; "matches the earlier measurement"; nothing recorded
+    else same key, different value or inputs
+        Computation-->>CLI: reproducibility defect
+        CLI-->>Lead: defect report, no value shown, nothing recorded, non-zero exit
     end
 ```
 
-**Critical flow 2: refusal before any write (AC-04, AC-05, AC-07, AC-10)**
+**Critical flow 2: refusals (AC-09, AC-06, AC-05, AC-10, AC-07, AC-04)**
 
 ```mermaid
 sequenceDiagram
@@ -258,146 +250,169 @@ sequenceDiagram
     participant Definitions
     participant Collection
     participant Computation
-    Lead->>CLI: compute cycle time for a team and period
-    CLI->>Definitions: resolve version and state map
-    alt definitions file missing
-        Definitions-->>CLI: refused: definitions file missing (AC-05)
+
+    Lead->>CLI: compute cycle-time --team team-beta --period 2026-10 [--version 1] [--by person]
+    alt breakdown by person requested
+        CLI-->>Lead: person_breakdown_refused: results are team-level only
+    else period not closed (Period.is_closed in UTC)
+        CLI-->>Lead: period_not_closed: the period must be closed first
+    else definitions file absent
+        CLI->>Definitions: current version and state map
+        Definitions-->>CLI: Refusal definitions_missing
+        CLI-->>Lead: definitions_missing: the definitions file is missing; nothing recorded
     else requested version retired
-        Definitions-->>CLI: refused: version retired, current is version 2 (AC-10)
-    else resolved
-        Definitions-->>CLI: version and state map
-        CLI->>Collection: get the closed snapshot
-        alt no snapshot for team and period
-            Collection-->>CLI: refused: import a snapshot for this team and period first (AC-07)
-        else snapshot found
-            Collection-->>CLI: snapshot
-            CLI->>Computation: compute with mapped inputs
-            Computation->>Computation: find tracker states the state map does not cover
-            Computation-->>CLI: refused: unmapped states listed (AC-04)
-        end
+        CLI->>Definitions: version 1 and state map
+        Definitions-->>CLI: Refusal definition_retired, current is version 2
+        CLI-->>Lead: definition_retired: use version 2; version 1 measurements unchanged
+    else no snapshot for team and period
+        CLI->>Collection: latest snapshot for team-beta, 2026-10
+        Collection-->>CLI: Refusal snapshot_missing
+        CLI-->>Lead: snapshot_missing: run collection (import) for team-beta, 2026-10 first
+    else states the state map does not cover
+        CLI->>Computation: compute(snapshot, version, state map, period)
+        Computation-->>CLI: Refusal unmapped_states with the state list
+        CLI-->>Lead: unmapped_states: extend the state map with the listed states
     end
-    CLI-->>Lead: plain reason, non-zero exit; nothing recorded on any branch
 ```
+
+Every branch of flow 2 writes nothing; each reply exits with a non-zero code distinct from the defect's.
+
+**Event ledger:**
+
+| Event | bc-map owner | In this feature |
+|---|---|---|
+| `TrackerSnapshotCollected` | Collection | published by the `import` command after a new snapshot (not on a no-op); no listener yet |
+| `GitHistoryCollected` | Collection | not yet: no Git source in F1 (§11 debt) |
+| `CollectionFailed` | Collection | not yet: an import error is printed to the terminal; Reporting does not exist (§11 debt) |
+| `DefinitionVersionPublished` | Definitions | not yet: the file is read at run time (§11 debt) |
+| `DefinitionVersionRetired` | Definitions | not yet as an event: retirement is read from the file at run time and refused (AC-10) (§11 debt) |
+| `MetricComputed` | Computation | published by `compute` after a new measurement; no listener until Evidence Guard |
+| `ReportingPeriodClosed` | external trigger | not produced: closure is the UTC calendar rule on `Period` (§11 debt) |
 
 ## 7. Deployment view
 
-<!-- N/A: F1 reuses the existing CLI deployment unit; no server, replicas or monitoring are added (target_surfaces: [cli], ADR 0002). -->
+<!-- N/A: F1 has the cli surface only (F1 ADR 0001); nothing is deployed or served. -->
 
-Deliberately not applicable for F1. The feature runs as the existing `evidence-meter` CLI on the Lead's
-laptop, with the SQLite file at `$EVIDENCE_METER_DB` (default `var/evidence-meter.sqlite3`); the API is
-unchanged and local-only. The only runtime target, ≤ 10 s for one team and period with up to 5,000 issues,
-is verified in §10.
-
-**Capacity note:** about 15 teams × 12 periods ≈ 180 snapshots a year of up to 5,000 issues each; one
-SQLite file holds this comfortably, so no scaling threshold is set in F1. Revisit with the all-teams run
-(PRD approach C).
+F1 runs on the Lead's laptop as the `evidence-meter` command against one SQLite file in `var/` (gitignored,
+`EVIDENCE_METER_DB`). Capacity: one team and period with a snapshot of up to 5,000 issues within the §10
+run-time target; each import adds one snapshot's rows, so the file grows by imports, not by re-runs.
 
 ## 8. Crosscutting concepts
 
 | Concept | Convention | Where defined |
 |---|---|---|
-| Logging | Standard-library `logging` to stderr only, no log file; never a person field; private state names and definition codes appear only in the Lead's terminal and in the local SQLite file (gitignored `var/`), never in the repository | here |
-| Authentication | None: local CLI, the API stays `/health` only | [repo ADR 0004](../../adr/0004-auth-oidc-deferred.md), [ADR 0002](adr/0002-deliver-f1-as-cli-only-and-keep-api-health-only.md) |
-| Capability rule | Team-level only; any breakdown other than team is refused with `person_breakdown` (AC-09) | AGENTS.md, here |
-| Error and refusal model | A refusal is a `Refusal(code, message, details)` result from `shared/`, never an exception; closed code list: `definitions_missing`, `version_retired`, `snapshot_missing`, `unmapped_states`, `period_not_closed`, `person_breakdown`, `rerun_differs`; the CLI exits non-zero; unexpected failures stay exceptions | [ADR 0007](adr/0007-return-refusals-as-typed-results-with-stable-codes.md) |
-| ID strategy | Snapshot id = sha256 of its canonical content; measurement unique on team, period, definition id, definition version, snapshot id, state-map digest; compute takes the latest imported snapshot unless one is named | [ADR 0004](adr/0004-identify-snapshots-by-content-hash-and-measurements-by-natural-key.md) |
-| Time and period | Timestamps normalised to UTC at import; a period is a UTC calendar month; a pass counts in the month of its done | [ADR 0008](adr/0008-use-utc-calendar-months-for-periods.md) |
-| Transactions | One SQLite transaction per write command; every check runs before the first write (all-or-nothing) | here |
-| Events | Event types in `shared/events.py`; in-process dispatcher in `entrypoints/dispatch.py`; `MetricComputed` has no listeners in F1 | [ADR 0003](adr/0003-orchestrate-compute-in-entrypoints-with-in-process-events.md) |
-| Offline | No network import in Collection, Definitions or Computation; a test blocks sockets during compute | PRD §6, here |
-| Privacy | Person fields dropped at snapshot import; a test scans command output, records and logs for person fields | [ADR 0005](adr/0005-drop-person-fields-at-snapshot-import.md) |
-| Configuration | `platform/config.py`: `EVIDENCE_METER_DB` (exists) and `EVIDENCE_METER_DEFINITIONS` (path to the private TOML file, default under `~/.config/evidence-meter/`) | here |
+| Logging | stderr only; refusal codes, counts and hashes, never a person field, a tracker state name, a team id, a definition id or an issue key | here |
+| Authentication | none: CLI only, no data-serving surface; OIDC arrives with the first one (repo ADR 0004) | [F1 ADR 0001](adr/0001-entrypoints-serve-f1-through-the-cli-only.md) |
+| Capability rule | Team-level only; `--by` accepts `team` or `person`, and `person` is refused (`person_breakdown_refused`) before any I/O; `--version N` names a definition version (default: the current one, AC-10) | AGENTS.md, PRD AC-09 |
+| Refusal codes | closed list, one per AC: `person_breakdown_refused` (AC-09), `period_not_closed` (AC-06), `definitions_missing` (AC-05), `definition_retired` (AC-10), `snapshot_missing` (AC-07), `unmapped_states` (AC-04); the AC-03 mismatch is a defect, not a refusal | [F1 ADR 0007](adr/0007-shared-return-refusals-as-typed-results.md) |
+| ID strategy | snapshot: team, period and SHA-256 of the canonical form; measurement: unique key of team, period, definition id, version number, version hash, snapshot hash, state-map hash | [F1 ADR 0003](adr/0003-collection-import-a-snapshot-file-as-an-immutable-snapshot.md), [F1 ADR 0008](adr/0008-computation-key-measurements-by-every-input.md) |
+| No value | outcome `value` or `no_finished_passes`; value NULL only with the second; never zero | [F1 ADR 0009](adr/0009-computation-record-no-finished-passes-as-an-outcome.md) |
+| Time and period | stored timestamps in UTC; `Period` `YYYY-MM` closed when the UTC month has ended; a pass counts in the UTC month of its done | [F1 ADR 0006](adr/0006-shared-store-utc-and-close-periods-by-utc-month.md) |
+| Transactions | every check before the first write; one transaction per write command (`import`, `compute`) through `platform/db.py` | here, [F1 ADR 0002](adr/0002-entrypoints-orchestrate-a-run-with-shared-types.md) |
+| Events | types in `shared/events.py`; in-process dispatcher in `entrypoints/`; F1 publishes `TrackerSnapshotCollected` and `MetricComputed` | [F1 ADR 0002](adr/0002-entrypoints-orchestrate-a-run-with-shared-types.md) |
+| Privacy ledger | see below; private names include team ids, definition ids and issue keys (they may carry an organisation's project key) | [F1 ADR 0004](adr/0004-collection-drop-person-fields-at-import.md) |
+| Offline | no network code in F1; a test blocks sockets during `compute` | PRD §6, SPEC criterion 8 |
+| Configuration | `EVIDENCE_METER_DB`, `EVIDENCE_METER_DEFINITIONS` (default `~/.config/evidence-meter/definitions.toml`) in `platform/config.py` | here, [F1 ADR 0005](adr/0005-definitions-read-a-toml-definitions-file.md) |
 | Internationalisation | English only | — |
-| Observability | None beyond the run-time test in §10; local CLI | §7 |
+
+**Privacy ledger** (every place person data or private names could land):
+
+| Place | Person data | Private names (state names, definition codes) |
+|---|---|---|
+| Snapshot file | may hold assignees and authors; the Lead's local file, never committed; import ignores those fields | tracker state names; local only |
+| `collection_*` tables | never: allow-list at import (F1 ADR 0004) | only here: tracker state names, team ids and issue keys, in the gitignored local SQLite file |
+| `computation_measurements` | never: team, period, counts, hashes | only here: team id and definition id in the key, in the gitignored local SQLite file |
+| `computation_state_maps` | never | only here: each state map used (tracker state names), kept so a measurement stays traceable after the file is edited; gitignored local SQLite file |
+| Events in memory | never | team id and definition id only, in process; never written or logged |
+| Logs (stderr) | never | never |
+| Terminal reply | never | only here: unmapped state names and the state map shown to the local Lead (PRD §6.1) |
+| Repo files and test fixtures | never: synthetic teams and issues only | never: synthetic state names only |
+| Private definitions file | none | only here: outside git, read only by Definitions |
 
 ## 9. Architecture decisions
 
-| # | Title | Status | Section |
-|---|---|---|---|
-| [0001](adr/0001-import-synthetic-snapshot-file-until-collection-adapter-exists.md) | Import a synthetic snapshot file until Collection's tracker adapter exists | Accepted | §3 |
-| [0002](adr/0002-deliver-f1-as-cli-only-and-keep-api-health-only.md) | Deliver F1 as a CLI only and keep the API health-only | Accepted | §4 |
-| [0003](adr/0003-orchestrate-compute-in-entrypoints-with-in-process-events.md) | Orchestrate compute in entrypoints with in-process events | Accepted | §4 |
-| [0004](adr/0004-identify-snapshots-by-content-hash-and-measurements-by-natural-key.md) | Identify snapshots by content hash and measurements by natural key | Accepted | §4 |
-| [0005](adr/0005-drop-person-fields-at-snapshot-import.md) | Drop person fields at snapshot import | Accepted | §4 |
-| [0006](adr/0006-prefix-tables-by-owning-context-in-one-sqlite-file.md) | Prefix tables by owning context in one SQLite file | Accepted | §5 |
-| [0007](adr/0007-return-refusals-as-typed-results-with-stable-codes.md) | Return refusals as typed results with stable codes | Accepted | §8 |
-| [0008](adr/0008-use-utc-calendar-months-for-periods.md) | Use UTC calendar months for periods | Accepted | §8 |
+| # | Title | Owning context | Gate | Status | Section |
+|---|---|---|---|---|---|
+| [0001](adr/0001-entrypoints-serve-f1-through-the-cli-only.md) | Serve F1 through the CLI only | entrypoints | 3/4 | Accepted | §4 |
+| [0002](adr/0002-entrypoints-orchestrate-a-run-with-shared-types.md) | Orchestrate a run in entrypoints with shared types and in-process events | entrypoints | 3/4 | Accepted | §4 |
+| [0003](adr/0003-collection-import-a-snapshot-file-as-an-immutable-snapshot.md) | Import a snapshot file as an immutable stored snapshot | collection | 4/4 | Accepted | §4 |
+| [0004](adr/0004-collection-drop-person-fields-at-import.md) | Drop person fields at import | collection | 3/4 | Accepted | §4 |
+| [0005](adr/0005-definitions-read-a-toml-definitions-file.md) | Read a TOML definitions file with tomllib | definitions | 2/4 | Accepted | §5 |
+| [0006](adr/0006-shared-store-utc-and-close-periods-by-utc-month.md) | Store timestamps in UTC and close periods by the UTC calendar month | shared | 4/4 | Accepted | §6 |
+| [0007](adr/0007-shared-return-refusals-as-typed-results.md) | Return refusals as typed results with a closed code list | shared | 3/4 | Accepted | §6 |
+| [0008](adr/0008-computation-key-measurements-by-every-input.md) | Key measurements by every input | computation | 3/4 | Accepted | §8 |
+| [0009](adr/0009-computation-record-no-finished-passes-as-an-outcome.md) | Record "no finished passes" as an outcome, never as zero | computation | 3/4 | Accepted | §8 |
 
-ADR files live under `docs/features/metric-computation/adr/NNNN-<title>.md`. Repository-wide decisions
-(stack, modular monolith, SQLite, deferred sign-in) are in [docs/adr/](../../adr/).
+Feature ADRs live in `adr/`; repo-wide ones in `docs/adr/` ("repo ADR NNNN").
 
 ## 10. Quality requirements
 
-Each quality goal from §1, plus run time and offline, as a testable scenario. Numbers are verbatim from
-PRD §6; test file names are proposals that `plan-tests` confirms.
-
 **QG-1. Reproducibility**
-- **When:** the Lead computes again a team and period already computed, with the same snapshot and the same definition version.
-- **Then:** 100% identical value and inputs on re-run; the CLI says it matches the earlier measurement and records no second one; a difference is reported as `rerun_differs` and neither value is shown.
-- **How verify:** re-run test over the golden data in `make check` (`tests/test_cycle_time_golden.py`).
+- **When:** the Lead computes again with the same snapshot, definition version and state map (AC-03).
+- **Then:** 100% identical value and inputs on re-run
+- **How verify:** re-run test over the golden data in `make check` (`tests/test_compute_reproducibility.py`)
 
 **QG-2. Team-level only**
-- **When:** any F1 command runs, including a request for a breakdown by person.
-- **Then:** 0 per-person fields in command output, records or logs; the breakdown request is refused with `person_breakdown`.
-- **How verify:** a test scans every output (SPEC acceptance criterion 5): command output, `collection_*` and `computation_*` rows and captured logs (`tests/test_privacy_outputs.py`).
+- **When:** any command runs, including one that asks for a breakdown by person (AC-09).
+- **Then:** 0 per-person fields in command output, records or logs
+- **How verify:** a test scans every output (SPEC acceptance criterion 5) (`tests/test_person_fields.py`)
 
-**QG-3. Honest refusal, all-or-nothing**
-- **When:** a run is refused (AC-03 `rerun_differs`, AC-04, AC-05, AC-06, AC-07, AC-09, AC-10) or fails.
-- **Then:** 0 partial records after a refused or failed run; the Lead gets the plain reason for the refusal code.
-- **How verify:** test that every refusal AC leaves the store unchanged, comparing the database contents before and after each case (`tests/test_refusals_leave_store_unchanged.py`).
+**QG-3. All-or-nothing**
+- **When:** a run is refused (AC-04, AC-05, AC-06, AC-07, AC-09, AC-10) or fails, including the AC-03 defect.
+- **Then:** 0 partial records after a refused or failed run
+- **How verify:** test that every refusal AC leaves the store unchanged (`tests/test_all_or_nothing.py`)
 
 **QG-4. Run time**
-- **When:** the Lead computes one team and period from a snapshot of up to 5,000 issues.
-- **Then:** ≤ 10 s on a developer laptop.
-- **How verify:** timed test in CI on a synthetic 5,000-issue snapshot (`tests/test_compute_runtime.py`). CI stands in for the laptop, as the PRD states; a slower CI can only raise a false alarm, never hide a slowdown.
+- **When:** the Lead computes one team and period, snapshot up to 5,000 issues.
+- **Then:** ≤ 10 s on a developer laptop
+- **How verify:** timed test in CI on a synthetic 5,000-issue snapshot (`tests/test_compute_runtime.py`)
 
 **QG-5. Offline**
-- **When:** a compute run.
-- **Then:** 0 network calls during computation.
-- **How verify:** test with network access blocked (SPEC acceptance criterion 8): sockets patched to fail during compute (`tests/test_compute_offline.py`).
+- **When:** the Lead computes any team and period.
+- **Then:** 0 network calls during computation
+- **How verify:** test with network access blocked (SPEC acceptance criterion 8) (`tests/test_offline.py`)
 
 ## 11. Risks and technical debt
 
 | Risk / debt | Severity | Mitigation | Owner |
 |---|---|---|---|
-| The snapshot file shape diverges from what a real tracker export or the future Collection adapter produces ([ADR 0001](adr/0001-import-synthetic-snapshot-file-until-collection-adapter-exists.md)) | Medium | Define the shape once in the CLI contract with a synthetic sample; the adapter feature must emit the same shape | capstone owner |
-| State maps miss tracker states, so many runs are refused (KPI: ≤ 10% of runs from the second month) | Medium | The refusal lists the unmapped states (AC-04); measure the share over the first closed month | capstone owner |
-| Private state names or definition codes leak into committed files (PRD §6.1 abuse case) | Medium | Names live only in the private TOML file, the Lead's terminal and the local SQLite file (gitignored `var/`); fixtures and golden data are synthetic; `/review-diff` before each commit | capstone owner |
-| A change to the canonical serialisation changes every snapshot id or state-map digest ([ADR 0004](adr/0004-identify-snapshots-by-content-hash-and-measurements-by-natural-key.md)) | Medium | Fix the canonical form in the contract; a golden test pins the hash of a sample snapshot | capstone owner |
-| A team of one or two people: its team value is effectively one person's value (PRD §8) | Medium | Resolved in the Evidence Guard feature PRD; F1 sets no limit | capstone owner |
-| UTC months differ from a local by-hand count near month boundaries ([ADR 0008](adr/0008-use-utc-calendar-months-for-periods.md)) | Low | Documented; golden data pins a pass done near midnight; switching is a new definition version | capstone owner |
-| No by-hand baseline, so KPI 1 cannot be compared yet (PRD §8) | Low | The owner times one team-month by hand by 2026-11-30 | capstone owner |
+| R1. A value for a team of one or two people is effectively one person's value, and the Lead sees it unchecked | High | F1 output stays local and marked "not yet checked by Evidence Guard"; the threshold belongs to Evidence Guard | capstone owner |
+| Open question (PRD §8): from what team size is a team value effectively personal? Default: no limit in F1 | Open question | Resolve in the Evidence Guard feature PRD; it decides R1 | capstone owner |
+| R2. Work done late on the last local day of a month lands in the next UTC month for teams far from UTC (F1 ADR 0006) | Low | Revisit with pilot data; a timezone would become a key input | capstone owner |
+| R3. The JSON snapshot shape may not fit a real tracker's history (F1 ADR 0003) | Medium | Tracker adapters map into the same `collection_*` tables; golden data stays on the JSON shape | capstone owner |
+| R4. Several measurements per team and period; "current" is a read rule (F1 ADR 0008) | Medium | Evidence Guard and Reporting adopt one rule: latest snapshot, current version and state map | capstone owner |
+| R5. Real tracker state names in the local SQLite file and terminal (§8 privacy ledger) | Medium | `var/` gitignored; never logged; QG-2 test covers logs | capstone owner |
+| Open question (PRD §7 KPI 3): where are refused-run counts kept to measure "share of runs refused for unmapped states", given AC-04 records nothing? | Open question | Resolve before F1 release, at `/sdlc:break-tasks`; until then KPI 3 has no data | capstone owner |
+| R6. The 10 s target for 5,000 issues is unproven | Low | QG-4 timed test from the first formula commit | capstone owner |
 
-**Accepted debt (acceptable in v1, plan to fix later):**
-- Definitions resolves versions from the private file on each run and emits no `DefinitionVersionPublished` or
-  `DefinitionVersionRetired` event; Collection's import does not publish `TrackerSnapshotCollected` (bc-map's
-  Collection → Computation event), because compute reads the snapshot through `entrypoints/`; `MetricComputed`
-  is published with no listeners (ADR 0003). Wire these events when Evidence Guard arrives.
-- From the architecture map: the API error envelope covers `HTTPException` only, and `platform/migrate.py`
-  `revert_last()` interpolates a migration name read back from the table without re-checking it. F1 is
-  CLI-only and does not touch either; fix before the first data route, or as a separate small change.
-- `entrypoints/` grows into a coordinator (ADR 0003); table isolation is a convention plus a test (ADR 0006).
-- `.env.example` needs `EVIDENCE_METER_DEFINITIONS`; the file is write-denied for Claude, so the owner adds it
-  during S9.
+**Accepted debt:**
+- bc-map events not produced in F1 (§6 event ledger): `GitHistoryCollected` (no Git source), `CollectionFailed`
+  (no Reporting; import errors go to the terminal), `DefinitionVersionPublished` and `DefinitionVersionRetired`
+  (the file is read at run time), `ReportingPeriodClosed` (UTC calendar rule instead).
+- `TrackerSnapshotCollected` is published but Computation will not consume it: compute runs on the Lead's
+  request (F1 ADR 0002). bc-map Map and the ARCHITECTURE.md event table need an update (owner: capstone owner).
+- ARCHITECTURE.md Layout and the `shared/__init__.py` docstring still describe `shared` as `Team`, `Period`
+  and event types only (§1 override).
+- Architecture-map gaps F1 does not fix: the API envelope covers `HTTPException` only; `revert_last()` does
+  not re-check the migration name; no MCP surface. F1 does add the missing settings module and connection
+  helper in `platform/`.
 
 ## 12. Glossary
 
-Terms from [CONTEXT.md](CONTEXT.md) (canonical) used in this SAD, plus terms this SAD introduces (marked
-*new*, to be added to CONTEXT.md with `/sdlc:fix-term`).
-
 | Term | Meaning |
 |---|---|
-| Lead | The person who runs the monthly computation for their teams and reviews values before the page is drafted; never a person being measured |
-| Snapshot | The immutable issue history of one team for one closed period: issues, their state changes and timestamps, no person fields |
-| Snapshot id (*new*) | The sha256 of a snapshot's canonical content; the same content always has the same id (ADR 0004) |
-| Canonical form (*new*) | The normalised serialisation of a snapshot (sorted keys, UTC timestamps) that its id is computed from |
-| Pass | One stretch of work on an issue from a start (first start or a reopen) to the next done; counted in the period of its own done |
-| Period | A closed calendar month in UTC, identified as YYYY-MM (ADR 0008) |
-| Cycle time | The median duration of the passes a team finished in a period, each from its start to its done; not lead time |
-| Definition version | An immutable, numbered version of a metric definition naming its formula, inputs and minimum data; published or retired |
-| State map | One team's mapping from tracker states to the abstract states started, done and excluded; kept in the private definitions file |
-| Input | A named value read from one snapshot that a formula consumes |
-| Formula | A pure function, named by a FormulaId, that turns inputs into a value without reading or writing anything |
-| Measurement | The raw value for one team, period and definition version with the inputs it used; unchecked until Evidence Guard returns a Verdict; no value (never zero) when no passes finished |
-| Refusal (*new*) | A typed result with a stable code and a plain message, returned instead of a value when a run cannot proceed (ADR 0007) |
-
+| Cycle time | the median duration of the passes a team finished in a period, each pass measured from its start to its done. NOT lead time, which runs from the request (issue created) or the first commit, not from the start of work. |
+| DefinitionVersion | an immutable, numbered version of a metric definition that names its formula, its inputs and its minimum data. NOT MetricDefinition, which is the named metric across all its versions. |
+| Formula | a pure function, named by a FormulaId, that turns inputs into a value without reading or writing anything. NOT DefinitionVersion, which names a formula and its inputs as data; the formula itself is code. |
+| FormulaId | which pure formula a definition names (bc-map). |
+| Input | a named value read from one snapshot that a formula consumes, for example the count of issues closed in the period. NOT Snapshot, which is the whole immutable collection the input is read from. |
+| Lead | the person who runs the monthly computation for the teams they are responsible for and reviews the values before the page is drafted. NOT a team member being measured: the tool reports on the team, never on the lead or any other person. |
+| Measurement | the raw value computed for one team, one period and one definition version, together with the inputs it used. NOT a value that may be published: a measurement goes on a page only after Evidence Guard returns a Verdict; before that only the lead sees it, marked as not yet checked. When no passes were finished in the period, a measurement has no value (the median is not defined); it never becomes zero. |
+| Pass | one stretch of work on an issue from a start (first start, or a reopen) to the next done; a reopened issue has several passes, each counted in the period of its own done. NOT Issue, which can have one or more passes. |
+| Period | a closed calendar month for which values are computed, identified as YYYY-MM. NOT a sprint or iteration from the tracker, whose dates vary by team. |
+| Snapshot | the immutable collection of one team's tracker data for one period (bc-map, Collection). |
+| State map | one team's mapping from its tracker states to the abstract states a definition version uses (started, done, excluded), kept in the private definitions file. NOT IssueState, which is the state an issue actually has in the tracker. |
+| Refusal code | *new* — one code from the closed list in §8 that names why nothing was computed; one per PRD AC. NOT a Verdict, which Evidence Guard gives about a computed value. |
+| Snapshot hash | *new* — SHA-256 of a snapshot's canonical form (stored fields only, UTC timestamps). NOT the snapshot file's checksum, which changes with formatting and ignored fields. |
+| Measurement key | *new* — team, period, definition id, version number, version hash, snapshot hash, state-map hash. NOT the period alone: one team and period can have several measurements. |
+| Outcome | *new* — `value` or `no_finished_passes`, stored with every measurement. NOT a Verdict: an outcome says what the formula produced, not whether it may be shown. |

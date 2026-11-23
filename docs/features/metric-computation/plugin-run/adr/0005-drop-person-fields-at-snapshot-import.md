@@ -47,6 +47,6 @@ A tracker export may carry assignees and authors (PRD §6.1). F1 needs only issu
 
 ## Links
 
-- PRD: [[../PRD.md]] §5 AC-09, §6.1
+- PRD: [[../../PRD.md]] §5 AC-09, §6.1
 - SAD: [[../sad.md]] §4, §8 (privacy)
 - Related ADR: [[0001-import-synthetic-snapshot-file-until-collection-adapter-exists]]

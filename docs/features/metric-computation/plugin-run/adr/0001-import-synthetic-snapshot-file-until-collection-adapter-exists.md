@@ -53,6 +53,6 @@ same import path as real runs; a real export can be imported from outside git wh
 
 ## Links
 
-- PRD: [[../PRD.md]] §8 (open question 1), §6 (offline, reproducibility)
+- PRD: [[../../PRD.md]] §8 (open question 1), §6 (offline, reproducibility)
 - SAD: [[../sad.md]] §3
-- Related ADR: repo [0003 persistence on SQLite](../../../adr/0003-persistence-sqlite.md)
+- Related ADR: repo [0003 persistence on SQLite](../../../../adr/0003-persistence-sqlite.md)

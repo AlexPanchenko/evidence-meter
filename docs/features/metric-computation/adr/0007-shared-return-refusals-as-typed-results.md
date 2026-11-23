@@ -54,6 +54,6 @@ refusal visible in a handler's signature, and keeps tracebacks for real defects 
 
 ## Links
 
-- PRD: [[../../PRD.md]] §5 (AC-04..AC-07, AC-09, AC-10), §6
+- PRD: [[../PRD.md]] §5 (AC-04..AC-07, AC-09, AC-10), §6
 - SAD: [[../sad.md]] §6, §8
 - Related ADR: [[0002-entrypoints-orchestrate-a-run-with-shared-types]]

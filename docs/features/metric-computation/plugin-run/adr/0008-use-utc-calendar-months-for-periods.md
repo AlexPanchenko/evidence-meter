@@ -47,6 +47,6 @@ A pass counts in the period of its own done (CONTEXT: Pass, Period), and a perio
 
 ## Links
 
-- PRD: [[../PRD.md]] §5 AC-01, AC-08
+- PRD: [[../../PRD.md]] §5 AC-01, AC-08
 - SAD: [[../sad.md]] §8 (time and period)
 - Related ADR: [[0004-identify-snapshots-by-content-hash-and-measurements-by-natural-key]]

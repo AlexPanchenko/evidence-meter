@@ -58,6 +58,6 @@ maps where it does, and is easier to edit by hand.
 
 ## Links
 
-- PRD: [[../../PRD.md]] AC-04, AC-05, AC-10
+- PRD: [[../PRD.md]] AC-04, AC-05, AC-10
 - SAD: [[../sad.md]] §5, §8
 - Related ADR: [[0008-computation-key-measurements-by-every-input]]

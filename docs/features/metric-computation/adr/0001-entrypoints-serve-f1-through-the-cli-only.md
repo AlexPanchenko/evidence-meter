@@ -51,6 +51,6 @@ which push F1 past size M without serving a user need the PRD names.
 
 ## Links
 
-- PRD: [[../../PRD.md]] §8 (open question 2), §6.1
+- PRD: [[../PRD.md]] §8 (open question 2), §6.1
 - SAD: [[../sad.md]] §4, §7
 - Related ADR: repo ADR 0004; [[0002-entrypoints-orchestrate-a-run-with-shared-types]]

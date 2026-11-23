@@ -55,6 +55,6 @@ meaning of NULL; Evidence Guard reads the reason, not a convention.
 
 ## Links
 
-- PRD: [[../../PRD.md]] AC-01b, §2
+- PRD: [[../PRD.md]] AC-01b, §2
 - SAD: [[../sad.md]] §6 flow 1, §8
 - Related ADR: [[0008-computation-key-measurements-by-every-input]]

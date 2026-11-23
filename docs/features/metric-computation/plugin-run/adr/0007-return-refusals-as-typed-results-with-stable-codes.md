@@ -48,6 +48,6 @@ F1 has seven ways a run stops with a reason: definitions file missing (AC-05), v
 
 ## Links
 
-- PRD: [[../PRD.md]] §5 AC-03..AC-07, AC-09, AC-10
+- PRD: [[../../PRD.md]] §5 AC-03..AC-07, AC-09, AC-10
 - SAD: [[../sad.md]] §8 (error and refusal model), §6 flow 2
 - Related ADR: [[0003-orchestrate-compute-in-entrypoints-with-in-process-events]]

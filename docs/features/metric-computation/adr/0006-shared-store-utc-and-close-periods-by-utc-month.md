@@ -55,6 +55,6 @@ from UTC is a §11 risk to revisit with real pilot data.
 
 ## Links
 
-- PRD: [[../../PRD.md]] AC-06, AC-08; CONTEXT "Period"
+- PRD: [[../PRD.md]] AC-06, AC-08; CONTEXT "Period"
 - SAD: [[../sad.md]] §6, §8
 - Related ADR: [[0003-collection-import-a-snapshot-file-as-an-immutable-snapshot]]

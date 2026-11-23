@@ -65,6 +65,6 @@ value.
 
 ## Links
 
-- PRD: [[../../PRD.md]] AC-02, AC-03, AC-08, AC-10
+- PRD: [[../PRD.md]] AC-02, AC-03, AC-08, AC-10
 - SAD: [[../sad.md]] §6 flow 1, §8 (ID strategy)
 - Related ADR: [[0003-collection-import-a-snapshot-file-as-an-immutable-snapshot]]; [[0005-definitions-read-a-toml-definitions-file]]

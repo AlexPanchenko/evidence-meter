@@ -47,6 +47,6 @@ F1 adds the first real tables: Collection's snapshots and Computation's measurem
 
 ## Links
 
-- PRD: [[../PRD.md]] §6 (all-or-nothing)
+- PRD: [[../../PRD.md]] §6 (all-or-nothing)
 - SAD: [[../sad.md]] §5
-- Related ADR: [[0003-orchestrate-compute-in-entrypoints-with-in-process-events]]; repo [0003 persistence on SQLite](../../../adr/0003-persistence-sqlite.md)
+- Related ADR: [[0003-orchestrate-compute-in-entrypoints-with-in-process-events]]; repo [0003 persistence on SQLite](../../../../adr/0003-persistence-sqlite.md)

@@ -48,6 +48,6 @@ A compute run needs a snapshot (Collection), a definition version with a state m
 
 ## Links
 
-- PRD: [[../PRD.md]] §5 AC-04, AC-05, AC-07, AC-10 (refusals before any write)
+- PRD: [[../../PRD.md]] §5 AC-04, AC-05, AC-07, AC-10 (refusals before any write)
 - SAD: [[../sad.md]] §4, §5
-- Related ADR: [[0004-identify-snapshots-by-content-hash-and-measurements-by-natural-key]]; repo [0002 modular monolith](../../../adr/0002-modular-monolith.md)
+- Related ADR: [[0004-identify-snapshots-by-content-hash-and-measurements-by-natural-key]]; repo [0002 modular monolith](../../../../adr/0002-modular-monolith.md)

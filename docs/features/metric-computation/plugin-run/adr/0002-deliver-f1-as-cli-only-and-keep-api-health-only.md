@@ -48,6 +48,6 @@ PRD §8 asked whether F1 offers the value through the local API. Repo ADR 0004 d
 
 ## Links
 
-- PRD: [[../PRD.md]] §8 (open question 2), §6.1 (abuse case: serving the value to other machines)
+- PRD: [[../../PRD.md]] §8 (open question 2), §6.1 (abuse case: serving the value to other machines)
 - SAD: [[../sad.md]] §4
-- Related ADR: repo [0004 auth deferred](../../../adr/0004-auth-oidc-deferred.md); [[0003-orchestrate-compute-in-entrypoints-with-in-process-events]]
+- Related ADR: repo [0004 auth deferred](../../../../adr/0004-auth-oidc-deferred.md); [[0003-orchestrate-compute-in-entrypoints-with-in-process-events]]

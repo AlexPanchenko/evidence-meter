@@ -58,6 +58,6 @@ and it computes on import rather than on the Lead's request for a period.
 
 ## Links
 
-- PRD: [[../../PRD.md]] §5 (AC-01, AC-04..AC-10), §6 (all-or-nothing)
+- PRD: [[../PRD.md]] §5 (AC-01, AC-04..AC-10), §6 (all-or-nothing)
 - SAD: [[../sad.md]] §4, §5, §6
 - Related ADR: [[0001-entrypoints-serve-f1-through-the-cli-only]]; repo ADR 0002

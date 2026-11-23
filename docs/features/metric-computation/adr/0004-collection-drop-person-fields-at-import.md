@@ -57,6 +57,6 @@ present and future output.
 
 ## Links
 
-- PRD: [[../../PRD.md]] §6.1, AC-02, AC-09
+- PRD: [[../PRD.md]] §6.1, AC-02, AC-09
 - SAD: [[../sad.md]] §4, §8 (privacy ledger)
 - Related ADR: [[0003-collection-import-a-snapshot-file-as-an-immutable-snapshot]]
