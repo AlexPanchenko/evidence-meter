@@ -20,29 +20,31 @@ target_surfaces: []  # filled in §4 — subset of: backend-service | web-fronte
 
 ## 1. Introduction and goals
 
-<!-- 🎯 Навіщо: стабільна памʼять про «що + три головні якості + хто зацікавлений».     -->
-<!--           Через рік ніхто не згадає на словах, ЯКІ ТРИ ЯКОСТІ для системи критичні. -->
-<!-- 📋 Що писати: 1 абзац intent + 3 рядки топ-3 якості + таблиця stakeholders.        -->
-<!-- 📌 Приклад: «QG-1: швидкість редагування блоку p95 ≤500 мс»                         -->
-
-**Intent.** <One paragraph from PRD §Goals — what we're building and for whom.>
+**Intent.** F1 lets a Lead compute one metric, cycle time (the median duration of the passes a team finished
+in a period), for one team and one closed period, without counting by hand. Every value is recorded with
+its definition id and version, the state map and the inputs it used, and computing it again gives the same
+result. When the data cannot support a value, the Lead gets a plain reason, never a zero or a misleading
+number. The core is built so that running it over all teams later is cheap (PRD §1, §2).
 
 **Top-3 quality goals (1-liners; full scenarios in §10):**
 
-1. <e.g. "Availability under partial failure of downstream module">
-2. <e.g. "Performance for EM dashboard under team-scale growth">
-3. <e.g. "Recoverability of checkpoints with <30 min RTO">
+1. **Reproducibility** — the same snapshot and definition version always give an identical value and inputs.
+2. **Team-level only** — no value, field or log line per person, anywhere.
+3. **Honest refusal, all-or-nothing** — a refused or failed run records nothing and gives a plain reason.
+
+Run time (≤ 10 s for 5,000 issues) and offline computation (0 network calls) are quality requirements too;
+they get §10 scenarios but do not override the three above.
 
 **Stakeholders.**
 
 | Role | Interest | Sign-off owner? |
 |---|---|---|
-| <e.g. IC> | <feature usage> | No |
-| <e.g. EM> | <dashboard reads> | No |
-| <e.g. Tech Lead> | <SAD approval> | Yes |
+| Lead | Runs the computation for their teams, reads the unchecked measurement | No |
+| Engineering manager | Reads values later on the reviewed monthly page (Reporting); no F1 output | No |
+| Tech Lead | Approves this SAD | Yes |
+| Security Lead | Review required: size M, person data present in the snapshot (PRD §6.1) | Yes |
 
-<!-- Decision overrides (¶4) — populated by the Step-7 critic resolution loop, empty otherwise.       -->
-<!-- Each: «Decision override: <headline> — rationale: <reason>» so downstream skills see the choice.  -->
+<!-- Decision overrides (¶4) — populated by the Step-7 critic resolution loop, empty otherwise. -->
 
 ## 2. Constraints
 
