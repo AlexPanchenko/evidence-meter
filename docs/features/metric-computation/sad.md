@@ -377,14 +377,22 @@ PRD §6; test file names are proposals that `plan-tests` confirms.
 
 ## 12. Glossary
 
-<!-- 🎯 Навіщо: ⭐ СЛОВНИК ДОМЕНУ, який припиняє суперечки через рік («checkpoint —      -->
-<!--           weekly чи biweekly? Quarter — календарний чи фіскальний?»).                -->
-<!-- 📋 Що писати: таблиця термін / значення. Бізнес-терміни + технічні вперемішку.       -->
-<!--           Один термін може мати дві мови у заголовку: «Goal (Обʼєктив)».              -->
-<!-- 📌 Приклад: «Lesson | урок усередині курсу, що складається з блоків (text, video)». -->
+Terms from [CONTEXT.md](CONTEXT.md) (canonical) used in this SAD, plus terms this SAD introduces (marked
+*new*, to be added to CONTEXT.md with `/sdlc:fix-term`).
 
 | Term | Meaning |
 |---|---|
-| <e.g. Goal> | <quarterly intent in statement form> |
-| <e.g. KR> | <Key Result — measurable target linked to a Goal> |
-| <e.g. Checkpoint> | <bi-weekly progress update on a KR> |
+| Lead | The person who runs the monthly computation for their teams and reviews values before the page is drafted; never a person being measured |
+| Snapshot | The immutable issue history of one team for one closed period: issues, their state changes and timestamps, no person fields |
+| Snapshot id (*new*) | The sha256 of a snapshot's canonical content; the same content always has the same id (ADR 0004) |
+| Canonical form (*new*) | The normalised serialisation of a snapshot (sorted keys, UTC timestamps) that its id is computed from |
+| Pass | One stretch of work on an issue from a start (first start or a reopen) to the next done; counted in the period of its own done |
+| Period | A closed calendar month in UTC, identified as YYYY-MM (ADR 0008) |
+| Cycle time | The median duration of the passes a team finished in a period, each from its start to its done; not lead time |
+| Definition version | An immutable, numbered version of a metric definition naming its formula, inputs and minimum data; published or retired |
+| State map | One team's mapping from tracker states to the abstract states started, done and excluded; kept in the private definitions file |
+| Input | A named value read from one snapshot that a formula consumes |
+| Formula | A pure function, named by a FormulaId, that turns inputs into a value without reading or writing anything |
+| Measurement | The raw value for one team, period and definition version with the inputs it used; unchecked until Evidence Guard returns a Verdict; no value (never zero) when no passes finished |
+| Refusal (*new*) | A typed result with a stable code and a plain message, returned instead of a value when a run cannot proceed (ADR 0007) |
+
