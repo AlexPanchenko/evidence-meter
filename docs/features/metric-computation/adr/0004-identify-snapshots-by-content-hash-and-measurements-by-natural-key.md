@@ -26,12 +26,12 @@ AC-03 and the reproducibility NFR require a re-run with the same snapshot and de
 
 ## Considered options
 
-1. **Content hash and natural key** — A snapshot's id is the sha256 of its canonical content; re-importing the same content is a no-op. A measurement is unique on (team, period, definition id, definition version, snapshot id); a re-run compares with the stored row.
+1. **Content hash and natural key** — A snapshot's id is the sha256 of its canonical content; re-importing the same content is a no-op. A measurement is unique on (team, period, definition id, definition version, snapshot id, state-map digest); a re-run compares with the stored row.
 2. **Surrogate ids and a lookup** — Random UUIDs for snapshots and measurements, plus a query for the previous measurement of the same team, period and version, and a separate rule for 'same snapshot'.
 
 ## Decision outcome
 
-**Chosen:** Option 1. Identity follows content, so 'same inputs' is a key lookup rather than a rule, and two imports of one file cannot become two snapshots.
+**Chosen:** Option 1. Identity follows content, so 'same inputs' is a key lookup rather than a rule, and two imports of one file cannot become two snapshots. The state map is part of the inputs: its digest (sha256 of the team's state map in canonical form) is in the key, so editing a state map yields a new measurement instead of a false `rerun_differs`. Compute uses the latest imported snapshot for a team and period unless the Lead names an older snapshot id. (Amended after the critic pass.)
 
 ## Consequences
 
@@ -40,8 +40,8 @@ AC-03 and the reproducibility NFR require a re-run with the same snapshot and de
 - Ids are stable across machines: the same file gives the same snapshot id anywhere.
 
 **Negative**
-- Canonical serialisation (key order, timestamp format) becomes part of the contract; changing it changes every id.
-- A corrected re-export of the same month is a new snapshot; both are kept, so the Lead must pick which one to compute.
+- Canonical serialisation (key order, timestamp format) of snapshots and state maps becomes part of the contract; changing it changes every id and digest.
+- A corrected re-export of the same month is a new snapshot; both are kept; compute takes the latest import unless an older snapshot id is named, so reproducing a value from the older export means naming it.
 
 **Neutral**
 - Measurements never update in place; history is not rewritten (US-07).
