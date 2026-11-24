@@ -9,6 +9,7 @@
     "lint": "oxlint --deny-warnings",
     "test": "vitest run",
     "typecheck": "tsc -b",
+    "mermaid:check": "node scripts/check-mermaid.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

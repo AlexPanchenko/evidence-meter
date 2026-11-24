@@ -11,13 +11,14 @@ app (React, Vite, TypeScript) in `web/`.
   `web/package-lock.json`.
 - `make check`: `make lint` plus `make test`. This is the command that proves a change; run it before
   calling any task done and show its last lines.
-- `make lint`: ruff lint and format check, the dependency rule (`tests/test_architecture.py`), oxlint and
-  the TypeScript type check.
+- `make lint`: ruff lint and format check, the dependency rule (`tests/test_architecture.py`), oxlint,
+  the TypeScript type check and a browser-free parse of every Mermaid block.
 - `make test`: pytest and Vitest.
 - `make dev`: the API on 127.0.0.1:8000 and the web app on 127.0.0.1:5173; stop it after use.
 - `make migrate`: apply pending SQL migrations to `$EVIDENCE_METER_DB`.
-- `make diagrams`: render every Mermaid block with mermaid-cli; run it after changing a diagram. It needs
-  Chromium, which cannot start in the agent sandbox, so ask the owner to run it there; CI runs it too.
+- `make diagrams`: render every Mermaid block with mermaid-cli; run it after changing a diagram (`make lint`
+  already catches a diagram that does not parse). It needs Chromium, which cannot start in the agent
+  sandbox, so ask the owner to run it there; CI runs it too.
 - `make format`: apply ruff formatting. Run it instead of fixing format findings by hand.
 - `uv run pytest tests/<file>.py -k <name>`: one test while iterating; finish with `make check`.
 
