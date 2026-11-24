@@ -46,7 +46,8 @@ changes are listed at the end. It reads no file from the plugin.
 ### 2. Rules
 Read `.claude/rules/migrations.md`. Absent → copy `templates/rules-migrations-sqlite.md` there and say so
 in the reply. Present → it wins over this skill's defaults; list any difference in the report. Never
-rewrite an existing rules file.
+rewrite an existing rules file. With `--out-dir`, write no rules file: use the template as the rules and
+say so in the report.
 
 ### 3. Storage ledger (the source of every table and column)
 Build one table before designing anything: for each table in the SAD §5 touch list, the ADR(s) whose
@@ -55,9 +56,10 @@ A table with no ADR or flow → ask; an ADR Stored data line or a persist step w
 replaces the plugin's guess of entities from user stories.
 
 ### 4. Aggregates and keys
-One aggregate per root table; children live in the same migration as their root. Primary key
+Each root table is an aggregate; children live in the same migration as their root. Primary key
 `id INTEGER PRIMARY KEY`; identity is the natural `UNIQUE` key from SAD §8 (copy its column list
-verbatim). Ask only if the SAD names no key for a table.
+verbatim). If the SAD names no key for a table: ask at medium; at easy, add only the key a flow needs
+(often none for a child table) and list it as an assumption.
 
 ### 5. Columns
 From the ledger only. Types `INTEGER`, `REAL`, `TEXT`; every table `STRICT`; timestamps `TEXT` ISO 8601
@@ -70,6 +72,8 @@ Run the privacy check on the column list now, not at the end.
 One per query in the ledger. Write the query as SQL in `data-model.md` (`### Queries`), then name the
 index that serves it. A `UNIQUE` key that already serves a query is the index; do not add a second. FK
 columns need an index whose first column is the FK. No query → no index, except the FK rule, which says so.
+A plan of `SEARCH ... USING INDEX` followed by `USE TEMP B-TREE FOR ORDER BY` is accepted when the
+searched prefix returns a few rows (say how many in the doc); a full `SCAN` fails.
 
 ### 7. Design doc
 Write `data-model.md` from `templates/data-model-template.md`: storage ledger, ER diagram, tables with
@@ -79,8 +83,9 @@ lint. No `;` in Mermaid labels.
 
 ### 8. Migrations (staged)
 Into `docs/features/<slug>/migrations/` (or `<out-dir>/migrations/`), named with the next free numbers
-after the live tree: `NNNN_create_<context>_<root>.up.sql` + `.down.sql`, one per aggregate or per
-context as the SAD touch list says. `CREATE ... IF NOT EXISTS`, `DROP ... IF EXISTS`, children dropped
+after the live tree: `NNNN_create_<context>_<root>.up.sql` + `.down.sql`. The SAD touch list decides the
+split (one migration per context when it lists one); if it names the files, keep its numbers, add the
+verb, and note the rename in the report. `CREATE ... IF NOT EXISTS`, `DROP ... IF EXISTS`, children dropped
 before parents, no `BEGIN`/`COMMIT` (the runner wraps each file).
 
 ### 9. Seeds
