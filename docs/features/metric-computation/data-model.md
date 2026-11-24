@@ -62,7 +62,7 @@ erDiagram
         text state_map_hash UK, FK
         text outcome
         real value
-        integer finished_passes
+        integer passes_counted
         integer issues_excluded
         text computed_at
     }
@@ -135,7 +135,7 @@ any other person field has no column, so it cannot be stored.
 | `state_map_hash` | TEXT | NOT NULL, key, FK → `computation_state_maps(state_map_hash)` | indexed below |
 | `outcome` | TEXT | NOT NULL, CHECK | `value` or `no_finished_passes` (F1 ADR 0009) |
 | `value` | REAL | NULL only with `no_finished_passes` (CHECK) | median in the definition's unit; never zero for "no value" |
-| `finished_passes` | INTEGER | NOT NULL | AC-02 (drill: renamed from `passes_counted`) |
+| `passes_counted` | INTEGER | NOT NULL | AC-02 |
 | `issues_excluded` | INTEGER | NOT NULL | issues mapped to `excluded` (won't do, duplicate), AC-02 |
 | `computed_at` | TEXT | NOT NULL | not part of the key; a matching re-run records nothing (AC-03) |
 
