@@ -1,0 +1,46 @@
+# contract-builder template: copied to contracts/openapi.yaml when a feature adds an HTTP route to
+# entrypoints/api.py. The API binds to 127.0.0.1 until OIDC (docs/adr/0004); no auth scheme until then.
+openapi: 3.1.0
+info:
+  title: Evidence Meter — <slug>
+  version: 0.1.0
+  description: <PRD §1, one paragraph>
+servers:
+  - url: http://127.0.0.1:8000
+paths:
+  /api/<resource>:
+    get:
+      operationId: <verbResource>
+      summary: <user story>
+      parameters:
+        - name: team
+          in: query
+          required: true
+          schema: { $ref: '#/components/schemas/TeamId' }
+      responses:
+        '200':
+          description: <team-level result>
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/<Result>' }
+        '409':
+          description: Refused (closed list in the refusal ADR)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorEnvelope' }
+              example: { error: { code: snapshot_missing, message: "run import for team-alpha, 2026-10 first" } }
+components:
+  schemas:
+    TeamId: { type: string, examples: [team-alpha] }
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      additionalProperties: false
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          additionalProperties: false
+          properties:
+            code: { type: string, description: "a code from the feature's closed list" }
+            message: { type: string }
