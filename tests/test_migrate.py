@@ -62,3 +62,33 @@ def test_a_badly_named_migration_is_rejected(tmp_path: Path, migrations: Path) -
     (migrations / "3_Oops'.up.sql").write_text("SELECT 1;")
     with pytest.raises(ValueError, match="NNNN_lower_snake"):
         apply(tmp_path / "demo.sqlite3", migrations)
+
+
+REPO_MIGRATIONS = Path(__file__).resolve().parent.parent / "migrations"
+F1_TABLES = {
+    "collection_snapshots",
+    "collection_issue_transitions",
+    "computation_state_maps",
+    "computation_measurements",
+}
+
+
+def schema(db: Path) -> list[tuple[str, str]]:
+    with sqlite3.connect(db) as conn:
+        rows = conn.execute(
+            "SELECT type, name FROM sqlite_master WHERE name NOT IN ('schema_migrations')"
+            " AND name NOT LIKE 'sqlite_autoindex_schema%' ORDER BY type, name"
+        ).fetchall()
+    return rows
+
+
+def test_repo_migrations_create_the_f1_tables_and_revert_to_empty(tmp_path: Path) -> None:
+    db = tmp_path / "repo.sqlite3"
+    applied = apply(db, REPO_MIGRATIONS)
+    assert tables(db) == F1_TABLES
+    full = schema(db)
+    assert apply(db, REPO_MIGRATIONS) == []
+    assert [revert_last(db, REPO_MIGRATIONS) for _ in applied] == applied[::-1]
+    assert schema(db) == []
+    apply(db, REPO_MIGRATIONS)
+    assert schema(db) == full

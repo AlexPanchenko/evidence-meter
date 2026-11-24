@@ -12,8 +12,11 @@ KEY`; keep F1 ADR 0009's CHECK; breaking change as a staged exercise only.
   the query each serves.
 - Staged in `migrations/` of this folder: `0002_create_collection_snapshots`,
   `0003_create_computation_measurements` (up + down). The plugin leaves promotion to `implement-tasks`;
-  here they move to the live `migrations/` in the next commit, because the lesson asks for the
-  apply / no-op / revert proof now and no code reads these tables yet.
+  here they moved to the live `migrations/` in the next commit (`git mv`), because the lesson asks for
+  the apply / no-op / revert proof now and no code reads these tables yet. Proof: `make migrate` applied
+  0001-0003, a second run printed "nothing pending", `--revert` twice left no tables, `make migrate`
+  re-applied both; `tests/test_migrate.py::test_repo_migrations_create_the_f1_tables_and_revert_to_empty`
+  pins it (red before the move, green after).
 - `migrations/_exercise/`: `0004_expand_...`, `0005_backfill_...`, `0006_contract_...` and
   `backfill-source.md`. Never promoted.
 
