@@ -44,8 +44,16 @@
       "Edit(identifiers.local.*)",
       "Read(**/data/real/**)",
       "Read(**/data/raw/**)",
-      "Read(**/credentials*)"
+      "Read(**/credentials*)",
+      "Bash(git reset --hard)",
+      "Bash(git reset --hard *)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash",
+        "hooks": [ { "type": "command", "command": "python3 -I \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block_secret_staging.py" } ] }
+     ]
   },
   "sandbox": {
     "enabled": true,
