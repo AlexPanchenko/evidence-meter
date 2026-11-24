@@ -25,13 +25,15 @@ test:
 	uv run pytest
 	$(WEB) test
 
-# Style, the dependency rule between contexts (tests/test_architecture.py), web lint and type check.
+# Style, the dependency rule between contexts (tests/test_architecture.py), web lint and type check,
+# and a parse of every Mermaid block without a browser (web/scripts/check-mermaid.mjs).
 lint:
 	uv run ruff check .
 	uv run ruff format --check .
 	uv run pytest tests/test_architecture.py -q
 	$(WEB) run lint
 	$(WEB) run typecheck
+	$(WEB) run --silent mermaid:check
 
 format:
 	uv run ruff format .
@@ -41,7 +43,8 @@ migrate:
 	uv run python -m evidence_meter.platform.migrate
 
 # Render every Mermaid block in tracked Markdown with mermaid-cli; a diagram that does not parse fails.
-# Not part of check: Chromium cannot start inside the agent sandbox. CI runs it.
+# Not part of check: Chromium cannot start inside the agent sandbox. CI runs it. `make lint` already
+# parses every block (mermaid:check), so a syntax error fails there first; this target adds rendering.
 # web/mermaid.config.json sets htmlLabels false, so labels are SVG text that every viewer draws; HTML
 # labels (<foreignObject>) show as empty boxes in Preview, Quick Look and <img>, and the last line fails on them.
 diagrams:
