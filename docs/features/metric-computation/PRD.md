@@ -2,7 +2,7 @@
 status: Approved
 owner: "capstone owner"
 reviewers: ["Tech Lead", "Security Lead"]
-updated_at: "2026-11-23"
+updated_at: "2026-11-24"
 feature_size: "M"
 stage: "03"
 ticket: "none (capstone F1)"
@@ -38,6 +38,11 @@ Traceability:
   unchecked measurement before Evidence Guard exists; a missing snapshot is refused, never shown as zero.
 - Critic pass: AC-01b moved to US-01 (a formula result with no defined median, not a refusal, so the
   all-or-nothing NFR holds) and names the definition id; CONTEXT.md Measurement covers the no-value case.
+- Clarify pass (`/sdlc:clarify-prd`, 2026-11-24, depth medium, clean-context devil's advocate): 15 findings, 14
+  resolved, 1 deferred. AC-01 to AC-04 and AC-09 tightened to match the decisions already taken in F1 ADR 0006,
+  0007 and 0008, `contracts/cli.md` and `data-model.md`. New: AC-10b (a re-run with a retired version is
+  refused) and AC-11 (the order of refusals). The pass rules and Snapshot went to CONTEXT.md. §8 questions 1
+  and 2 are closed by F1 ADR 0003 and 0001; KPI 3 is deferred because a refused run records nothing.
 
 ## 2. Goals
 
@@ -96,8 +101,8 @@ Traceability:
 
 ### AC-01 (US-01) — happy path
 **Given** a closed snapshot for team-alpha and period 2026-10, a published cycle-time definition version, and a state map that covers every state team-alpha uses
-**When** the Lead computes cycle time for team-alpha and 2026-10
-**Then** the system records the measurement — the median duration of the passes finished in 2026-10 — and shows it to the Lead marked as not yet checked by Evidence Guard
+**When** the Lead computes cycle time for team-alpha and 2026-10 without naming a definition version
+**Then** the system uses the current published version and records the measurement — the median duration of the passes finished in 2026-10 — and shows it to the Lead marked as not yet checked by Evidence Guard. A pass belongs to the UTC month of its done (F1 ADR 0006) and follows the pass rules in CONTEXT.md. Durations are calendar time between UTC timestamps; with an even number of passes the median is the mean of the two middle durations; the value is in the unit the definition version names, stored unrounded and shown to one decimal
 
 ### AC-01b (US-01) — domain invariant (edge case: no finished passes)
 **Given** team-alpha finished no passes in 2026-10, because every issue is still open or excluded
@@ -107,17 +112,17 @@ Traceability:
 ### AC-02 (US-02) — happy path (traceability)
 **Given** the measurement from AC-01
 **When** the Lead looks at it
-**Then** it names the definition id, the definition version, the state map, the number of passes counted and the number of issues excluded as won't-do or duplicate, and nothing that identifies a person
+**Then** it names the definition id, the definition version, the state map (its mapping and its hash), the snapshot, the number of passes counted and the number of issues excluded as won't-do or duplicate (issues whose state at snapshot close maps to excluded and that had a transition in the period), and nothing that identifies a person: the recorded inputs are counts and hashes only, never an issue key or a per-issue duration
 
 ### AC-03 (US-03) — domain invariant
 **Given** a recorded measurement for team-alpha, 2026-10 and definition version 1
-**When** the Lead computes again with the same snapshot and the same definition version
-**Then** the system shows the identical value and inputs, says it matches the earlier measurement and records no second one; if the new result differed, it would report a defect instead of showing either value
+**When** the Lead computes again with the same snapshot, the same definition version and the same state map
+**Then** the system shows the identical value and inputs, says it matches the earlier measurement and records no second one; if the new result differed, it would report a defect instead of showing either value. A newer snapshot for the same team and period, or a changed state map, is a different input: the system computes from the latest snapshot, records a new measurement and leaves the earlier one unchanged (F1 ADR 0008)
 
 ### AC-04 (US-04) — error
-**Given** team-alpha has issues in a tracker state its state map does not cover
+**Given** a state appears in any transition of team-alpha's snapshot and its state map does not cover it, or the definitions file has no state map for team-alpha at all
 **When** the Lead computes cycle time for team-alpha and 2026-10
-**Then** the system computes and records nothing and lists the unmapped states so the Lead can extend the state map
+**Then** the system computes and records nothing and lists the unmapped state names (every state, when there is no state map), and no issue keys, so the Lead can extend the state map
 
 ### AC-05 (US-04) — error
 **Given** no private definitions file is present
@@ -141,13 +146,23 @@ Traceability:
 
 ### AC-09 (US-06) — authorization
 **Given** any team and any period
-**When** the Lead asks for cycle time broken down by person
+**When** the Lead asks for cycle time broken down by person (the only breakdown offered besides the team)
 **Then** the system refuses with the reason that results are team-level only, and nothing per person is recorded, shown or logged
 
 ### AC-10 (US-07) — cross-context
 **Given** cycle-time definition version 1 was retired in Definitions and version 2 is published
 **When** the Lead computes cycle time with version 1
 **Then** the system refuses, names version 2 as the current version, and the existing version 1 measurements stay unchanged and still name version 1
+
+### AC-10b (US-07) — domain invariant (re-run with a retired version)
+**Given** a recorded measurement for team-alpha, 2026-10 and definition version 1, and version 1 was retired afterwards
+**When** the Lead computes again with version 1, the same snapshot and the same state map
+**Then** the system refuses as in AC-10 instead of confirming the match: US-03 re-runs hold for versions that are not retired, and the recorded version 1 measurement stays unchanged
+
+### AC-11 (US-04) — error (several refusals at once)
+**Given** more than one refusal applies, for example a period that is not closed and no snapshot
+**When** the Lead computes cycle time
+**Then** the system shows one reason, the first in this order: breakdown by person, period not closed, definitions file missing, version retired, snapshot missing, unmapped states; it computes and records nothing
 
 ## 6. Non-functional requirements
 
@@ -173,13 +188,14 @@ Traceability:
 
 ## 7. Metrics / KPIs
 
-- **Lead's time per team and period to the first metric** — baseline: hours, estimated, not measured (the owner times one team-month by hand by 2026-11-30); target: ≤ 5 minutes within the first closed month after release.
+- **Lead's time per team and period to the first metric** — baseline: hours, estimated, not measured (the owner times one team-month by hand by 2026-11-30); target: ≤ 5 minutes within the first closed month after release; measured by the owner timing one run from snapshot import to the shown value.
 - **Pilot teams with a computed value each month** — baseline: 0; target: 5 within two closed months after release.
-- **Share of runs refused for unmapped states** — baseline: TBD, measured over the first closed month after release; target: ≤ 10% of runs from the second month.
+- **Share of runs refused for unmapped states** — deferred (§8): a refused run records nothing (§6 All-or-nothing), so F1 has no data to measure it; target kept for the later feature: ≤ 10% of runs from the second month.
 
 ## 8. Open questions
 
-- [ ] How does F1 get a closed snapshot before Collection exists? Default now: a synthetic stored snapshot. — owner: capstone owner, due: S7 (`/sdlc:architecture-design`)
-- [ ] Does F1 offer the value through the local API, which would make it the first data-serving feature and bring sign-in (ADR 0004)? Default now: command line only. — owner: capstone owner, due: S7 (`/sdlc:architecture-design`)
+- [x] How does F1 get a closed snapshot before Collection exists? Resolved: the Lead imports a snapshot file, stored as an immutable snapshot (F1 ADR 0003). — owner: capstone owner, closed: S7
+- [x] Does F1 offer the value through the local API, which would make it the first data-serving feature and bring sign-in (ADR 0004)? Resolved: command line only (F1 ADR 0001). — owner: capstone owner, closed: S7
 - [ ] From what team size is a team value effectively personal? Default now: no limit in F1. — owner: capstone owner, due: Evidence Guard feature PRD
 - [ ] What is the by-hand baseline for one team and period? Default now: "hours", estimated. — owner: capstone owner, due: 2026-11-30
+- [ ] Where are refused runs counted for KPI 3, given that a refused run records nothing? Default now: not measured in F1. — owner: capstone owner, due: the Evidence Guard or Reporting feature PRD
