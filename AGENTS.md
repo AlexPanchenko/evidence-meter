@@ -67,13 +67,22 @@ The repository and everything built from it may become public, and a public copy
   first, because those seams will become module boundaries.
 - Tests under `tests/` follow [.claude/rules/tests.md](.claude/rules/tests.md) (loaded when you open a test).
 
-## Commits
+## Git
 
 The project is the capstone of the Agentic Engineering 3.0 course; the history is the evidence of the build.
 
-- One or more commits per lesson, never one commit across unrelated lessons. Subject starts with the lesson
-  id: `[m04-l04] <what changed>`; a change that serves several lessons of one step names them all:
-  `[m04-l02 m04-l04] <what>`.
+- Branches: GitHub Flow. `main` stays green; each change goes on a short branch `<feature-or-step>-<topic>`
+  (`f1-spec-package`, `f1-cli-compute`) that lives a day or two. The owner pushes it and opens a draft PR
+  after the first commit, so review starts early; merge only through a reviewed PR.
+- Commit subject: `[<lesson-id>] <type>(<scope>): <what>`, Conventional Commits after the lesson id, e.g.
+  `[m06-l08] feat(cli): add compute command`; types `feat`, `fix`, `docs`, `test`, `refactor`, `chore`. A
+  change for several lessons of one step names them all: `[m04-l02 m04-l04] docs: ...`. Earlier commits
+  use `[<lesson-id>] <what>` and stay as they are.
+- One or more commits per lesson, never one commit across unrelated lessons; one logical change per commit
+  (split mixed changes before committing). Commit only what the lesson changed; `make check` passes first.
+- Review the diff (`git diff --staged` or `/diff`) before every commit.
+- Undo a committed change with `git revert`, never `git reset --hard` (denied). Never force-push.
+- Never stage a secret: `.env`, `*.pem`, `*.key`, `credentials*` stay out of git (`.gitignore`); a
+  PreToolUse hook blocks staging them.
 - When a lesson's evidence is complete, tag the last commit `ae3/<lesson-id>` with `git tag -a`, because
-  `git push --follow-tags` pushes only annotated tags. Never move a pushed tag and never force-push.
-- Commit only what the lesson changed; `make check` passes before each commit.
+  `git push --follow-tags` pushes only annotated tags. Never move a pushed tag.
