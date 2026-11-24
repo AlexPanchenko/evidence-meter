@@ -28,9 +28,17 @@ def report_path(contracts: Path) -> Path | None:
     return None
 
 
-def closed_list(feature: Path) -> set[str]:
+def adr_dir(contracts: Path) -> Path:
+    """The nearest adr/ above the contracts folder (an --out-dir run sits one level deeper)."""
+    for parent in contracts.resolve().parents:
+        if (parent / "adr").is_dir():
+            return parent / "adr"
+    return contracts.parent / "adr"
+
+
+def closed_list(adrs: Path) -> set[str]:
     codes: set[str] = set()
-    for adr in sorted((feature / "adr").glob("*.md")):
+    for adr in sorted(adrs.glob("*.md")):
         text = adr.read_text(encoding="utf-8")
         for match in re.finditer(r"Codes:(.*?)(?:\n\n|\Z)", text, re.S):
             codes.update(CODE.findall(match.group(1)))
@@ -44,7 +52,8 @@ def section(text: str, title: str) -> str:
 
 def contract_codes(text: str) -> set[str]:
     codes = set(re.findall(r"Refused: ([a-z_]+):", text))
-    for line in section(text, "Checks, in order").splitlines():
+    checks = re.findall(r"^#+ Checks, in order[^\n]*\n(.*?)(?=^#+ |\Z)", text, re.S | re.M)
+    for line in "\n".join(checks).splitlines():
         if re.match(r"\|\s*\d+\s*\|", line):
             codes.update(CODE.findall(line.split("|")[3]))
     return codes
@@ -52,7 +61,6 @@ def contract_codes(text: str) -> set[str]:
 
 def check(contracts: Path) -> list[str]:
     findings: list[str] = []
-    feature = contracts.parent
     report = report_path(contracts)
     if report is None:
         return [f"{contracts}: no contract-report.md or api-sync-report.md"]
@@ -67,7 +75,7 @@ def check(contracts: Path) -> list[str]:
         )
 
     deferrals = section(report_text, "Deferrals")
-    allowed = closed_list(feature)
+    allowed = closed_list(adr_dir(contracts))
     contract_files = [
         p for p in sorted(contracts.iterdir()) if p.suffix in (".md", ".yaml") and p != report
     ]

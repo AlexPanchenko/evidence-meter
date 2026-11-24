@@ -1,6 +1,3 @@
-<!-- contract-builder template: copied to docs/features/<slug>/contracts/cli.md when sad.md
-     target_surfaces includes cli. Every row needs an origin in contract-report.md; delete any row
-     that has none. Synthetic values only. -->
 ---
 status: Draft
 owner: "<owner>"
@@ -8,6 +5,10 @@ reviewers: []
 updated_at: "<YYYY-MM-DD>"
 feature_size: <XS|S|M|L|XL>
 ---
+
+<!-- contract-builder template: copied to docs/features/<slug>/contracts/cli.md when sad.md
+     target_surfaces includes cli. Every row needs an origin in contract-report.md; delete any row
+     that has none. Synthetic values only. -->
 
 # CLI Contract — <slug>
 

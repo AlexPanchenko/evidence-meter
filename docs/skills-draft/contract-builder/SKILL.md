@@ -21,12 +21,15 @@ listed at the end. It reads no file from the plugin.
   rule, refusal codes, privacy ledger), `data-model.md` (scenario A if present, B if not), every feature ADR
   (the refusal ADR holds the closed code list), PRD §4-§5, `CONTEXT.md`, an existing contract (update in
   place, never overwrite).
-- Optional: `--out-dir <dir>` (comparison run, touches nothing else), `--reconcile`, `--depth easy|medium`.
+- Optional: `--out-dir <dir>` (comparison run, touches nothing else), `--reconcile`, `--depth easy|medium`
+  (easy: no Socratic pass, owner decisions only for flags; medium, the default: walk each command's table
+  with the owner before writing).
 
 ## Hard rules
 
 - **Never invent a field, flag, code or exit code.** Each one has an origin row in the report: a column, an
-  AC, a §6 message or an owner decision recorded in the run. A template field with no origin is deleted and
+  AC, a §6 message, an owner decision recorded in the run, or a framework default (`--help`, top-level
+  `--version`) named as such. A template field with no origin is deleted and
   listed under "Dropped for lack of an origin".
 - **Never silently drop a field.** A field whose source vanished stays with `# stale` and a report row; the
   owner chooses: fix the contract or fix the source first.
@@ -55,8 +58,9 @@ repository envelope, 127.0.0.1 binding until OIDC, cursor pagination and the ban
 `templates/report.md` → `contracts/contract-report.md`.
 
 ### 4. Derive commands or operations
-One command or operation per user story; a command that only serves a precondition (an import) maps to the
-AC whose refusal names it. Every argument and output field gets an origin row. Constraints come across from
+Group user stories by the command or operation that serves them (several stories may share one command);
+every story maps to at least one. A command that only serves a precondition (an import) maps to the AC
+whose refusal names it. Every argument and output field gets an origin row. Constraints come across from
 the model (`YYYY-MM`, `INTEGER ≥ 1`, CHECK enums).
 
 ### 5. Errors from the flows
@@ -85,7 +89,8 @@ FAIL), then field origins, the 6 points, unresolved origins, owner decisions, De
 6. *(core)* privacy: no output field, flag, example or log line can name a person or carry a private name
    outside the local terminal (SAD §8 privacy ledger); `scripts/check_contract.py` must exit 0.
 
-Three or more flags in one run: stop, ask the owner with AskUserQuestion (Accept as is / Fix the contract /
+A **flag** is any point where the sources disagree, are silent on something the contract must fix (a
+number, a name, a branch), or a default is overridden without an ADR. Three or more flags in one run: stop, ask the owner with AskUserQuestion (Accept as is / Fix the contract /
 Save as OQ / Fix the source first), record each answer in "Owner decisions". Write the report on every run,
 FAIL included.
 
