@@ -48,3 +48,20 @@ def test_no_blanket_bash_allow(settings: dict, rule: str) -> None:
 
 def test_commit_is_never_pre_allowed(settings: dict) -> None:
     assert not [r for r in _rules(settings)["allow"] if r.startswith("Bash(git commit")]
+
+
+@pytest.mark.parametrize("rule", ["Bash(git reset --hard)", "Bash(git reset --hard *)"])
+def test_hard_reset_is_denied(settings: dict, rule: str) -> None:
+    # m06-l08: undo with git revert; reset --hard destroys uncommitted work.
+    assert rule in _rules(settings)["deny"]
+
+
+def test_secret_staging_hook_is_registered(settings: dict) -> None:
+    # m06-l08: the PreToolUse hook blocks staging a secret (behaviour: tests/test_secret_hook.py).
+    commands = [
+        hook["command"]
+        for entry in settings["hooks"]["PreToolUse"]
+        if entry["matcher"] == "Bash"
+        for hook in entry["hooks"]
+    ]
+    assert any(c.endswith("/.claude/hooks/block_secret_staging.py") for c in commands)

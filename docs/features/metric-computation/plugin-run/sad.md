@@ -279,7 +279,7 @@ sequenceDiagram
             Computation-->>CLI: refused: unmapped states listed (AC-04)
         end
     end
-    CLI-->>Lead: plain reason, non-zero exit; nothing recorded on any branch
+    CLI-->>Lead: plain reason, non-zero exit, nothing recorded on any branch
 ```
 
 ## 7. Deployment view

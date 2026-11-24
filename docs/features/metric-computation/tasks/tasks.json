@@ -1,0 +1,224 @@
+{
+  "slug": "metric-computation",
+  "tasks": [
+    {
+      "id": "T1",
+      "title": "Add shared Team, Period, Refusal codes, records and event types",
+      "layer": "domain",
+      "deps": [],
+      "acs": [
+        "AC-06",
+        "AC-09"
+      ],
+      "dod": "unit tests: `Period.is_closed` is false at the last second of the month and true at the first second of the next (UTC); a malformed period is rejected; the refusal code list equals F1 ADR 0007's list, checked by a test that parses the ADR; `tests/test_architecture.py` passes: `shared` imports no context",
+      "files_hint": [
+        "src/evidence_meter/shared/",
+        "tests/test_shared.py"
+      ]
+    },
+    {
+      "id": "T2",
+      "title": "Add platform config and one-transaction database helper",
+      "layer": "infra",
+      "deps": [],
+      "acs": [],
+      "dod": "integration test: a transition for a missing snapshot is rejected (foreign keys on); integration test: an error inside the transaction leaves the database unchanged; config test reads both variables and the default path without reading the real file",
+      "files_hint": [
+        "src/evidence_meter/platform/config.py",
+        "src/evidence_meter/platform/db.py",
+        "tests/test_platform.py"
+      ]
+    },
+    {
+      "id": "T12",
+      "title": "Close the contract deferrals and the SAD doc debt",
+      "layer": "docs",
+      "deps": [],
+      "acs": [
+        "AC-07"
+      ],
+      "dod": "`api-sync-report.md` Deferrals 1-3 are closed or carry an owner decision; `/sdlc:api-forge metric-computation --reconcile` reports PASS; `make diagrams` renders changed Mermaid (run by the owner)",
+      "files_hint": [
+        "docs/features/metric-computation/PRD.md",
+        "docs/features/metric-computation/adr/0007-shared-return-refusals-as-typed-results.md",
+        "docs/features/metric-computation/sad.md",
+        "ARCHITECTURE.md",
+        "docs/bc-map.md"
+      ]
+    },
+    {
+      "id": "T3",
+      "title": "Implement passes, median and cycle-time outcome in computation domain",
+      "layer": "domain",
+      "deps": [
+        "T1"
+      ],
+      "acs": [
+        "AC-01",
+        "AC-01b",
+        "AC-04",
+        "AC-08"
+      ],
+      "dod": "unit tests for every AC-01, AC-01b, AC-04, AC-08 row of the [test plan](../test-plan.md) pass on golden data; median of an even count and equal-timestamp tie-break covered; `domain` imports only the standard library and `shared` (architecture test)",
+      "files_hint": [
+        "src/evidence_meter/computation/domain/",
+        "tests/test_cycle_time.py",
+        "tests/golden/"
+      ]
+    },
+    {
+      "id": "T4",
+      "title": "Read definitions file: versions, retirement, state maps, hashes",
+      "layer": "app",
+      "deps": [
+        "T1",
+        "T2"
+      ],
+      "acs": [
+        "AC-05",
+        "AC-10"
+      ],
+      "dod": "integration test with a temporary file: absent file \u2192 `definitions_missing`, retired v1 \u2192 `definition_retired` naming v2; malformed file \u2192 usage error, not a refusal; hashes are stable across key order in the file",
+      "files_hint": [
+        "src/evidence_meter/definitions/",
+        "tests/test_definitions.py",
+        "tests/fixtures/definitions.toml"
+      ]
+    },
+    {
+      "id": "T5",
+      "title": "Import a snapshot file into immutable collection tables",
+      "layer": "app",
+      "deps": [
+        "T1",
+        "T2",
+        "T12"
+      ],
+      "acs": [
+        "AC-07"
+      ],
+      "dod": "integration test: person fields in the file never reach a table; identical re-import stores nothing; a different file is a new snapshot; hash unchanged by key order and whitespace in the file",
+      "files_hint": [
+        "src/evidence_meter/collection/",
+        "tests/test_collection_import.py",
+        "tests/fixtures/snapshots/"
+      ]
+    },
+    {
+      "id": "T7",
+      "title": "Store measurements and state maps by measurement key",
+      "layer": "infra",
+      "deps": [
+        "T1",
+        "T2"
+      ],
+      "acs": [
+        "AC-01b",
+        "AC-03",
+        "AC-08"
+      ],
+      "dod": "integration test on a migrated temporary database: find by key, insert, second insert of the same key rejected; `no_finished_passes` stored with an empty value; a value with that outcome rejected by the CHECK; an earlier period's row is unchanged after inserting a later one",
+      "files_hint": [
+        "src/evidence_meter/computation/infra/",
+        "tests/test_computation_store.py"
+      ]
+    },
+    {
+      "id": "T6",
+      "title": "Serve the latest snapshot for a team and period",
+      "layer": "infra",
+      "deps": [
+        "T5"
+      ],
+      "acs": [
+        "AC-07"
+      ],
+      "dod": "integration test: none \u2192 `snapshot_missing`; another team's snapshot is not returned; two imports \u2192 the later one; query uses the latest index (`EXPLAIN QUERY PLAN` asserted)",
+      "files_hint": [
+        "src/evidence_meter/collection/",
+        "tests/test_collection_latest.py"
+      ]
+    },
+    {
+      "id": "T8",
+      "title": "Compute use case: coverage, key lookup, match or defect, record",
+      "layer": "app",
+      "deps": [
+        "T3",
+        "T7"
+      ],
+      "acs": [
+        "AC-01",
+        "AC-03",
+        "AC-04"
+      ],
+      "dod": "integration tests: match records nothing; defect records nothing and returns no value; unmapped states listed and nothing stored; all three branches of flow 1 covered",
+      "files_hint": [
+        "src/evidence_meter/computation/app/",
+        "tests/test_compute_use_case.py"
+      ]
+    },
+    {
+      "id": "T9",
+      "title": "Add the import command and the in-process event dispatcher",
+      "layer": "ports",
+      "deps": [
+        "T5"
+      ],
+      "acs": [
+        "AC-07"
+      ],
+      "dod": "e2e in process: new, identical and invalid files give the contract's replies and exit codes; event dispatched once for a new snapshot, never for the identical case",
+      "files_hint": [
+        "src/evidence_meter/entrypoints/cli.py",
+        "src/evidence_meter/entrypoints/dispatch.py",
+        "tests/test_cli_import.py"
+      ]
+    },
+    {
+      "id": "T10",
+      "title": "Add the compute command with ordered checks and replies",
+      "layer": "ports",
+      "deps": [
+        "T4",
+        "T6",
+        "T8",
+        "T9"
+      ],
+      "acs": [
+        "AC-01",
+        "AC-02",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-09",
+        "AC-10"
+      ],
+      "dod": "e2e in process for every AC-01..AC-10 row of the [test plan](../test-plan.md) marked e2e; `--by person` refuses before the definitions file is opened (test asserts no open); output matches the contract's output fields",
+      "files_hint": [
+        "src/evidence_meter/entrypoints/cli.py",
+        "tests/test_cli_compute.py"
+      ]
+    },
+    {
+      "id": "T11",
+      "title": "Add the NFR suite: all-or-nothing, person scan, offline, run time, smoke",
+      "layer": "tests",
+      "deps": [
+        "T10"
+      ],
+      "acs": [
+        "AC-02",
+        "AC-09"
+      ],
+      "dod": "all five suites pass in `make check`; the run-time test fails when the limit is set below the measured time (checked once by hand)",
+      "files_hint": [
+        "tests/test_all_or_nothing.py",
+        "tests/test_person_fields.py",
+        "tests/test_offline.py",
+        "tests/test_compute_runtime.py",
+        "tests/test_cli_smoke.py"
+      ]
+    }
+  ]
+}

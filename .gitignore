@@ -16,6 +16,9 @@ htmlcov/
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+credentials*
 
 # Personal Claude Code files (shared ones are .claude/settings.json, AGENTS.md and CLAUDE.md)
 .claude/settings.local.json
