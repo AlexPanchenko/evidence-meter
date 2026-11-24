@@ -3,7 +3,7 @@ id: T10
 title: "Add the compute command with ordered checks and replies"
 layer: "ports"
 deps: ["T4", "T6", "T8", "T9"]
-acs: ["AC-01", "AC-02", "AC-05", "AC-06", "AC-07", "AC-09", "AC-10"]
+acs: ["AC-01", "AC-02", "AC-05", "AC-06", "AC-07", "AC-09", "AC-10", "AC-10b", "AC-11"]
 files_hint: ["src/evidence_meter/entrypoints/cli.py", "tests/test_cli_compute.py"]
 owner: "capstone owner"
 estimate: "L"
@@ -23,7 +23,7 @@ wave: 4
 
 ## Definition of Done
 
-- [ ] e2e in process for every AC-01..AC-10 row of the [test plan](../test-plan.md) marked e2e
+- [ ] e2e in process for every AC-01..AC-11 row (AC-10b included) of the [test plan](../test-plan.md) marked e2e
 - [ ] `--by person` refuses before the definitions file is opened (test asserts no open)
 - [ ] output matches the contract's output fields
 - [ ] `make check` passes

@@ -68,14 +68,14 @@ See [tracker.md](./tracker.md) for status. Machine contract: [tasks.json](./task
 | T1 | Add shared Team, Period, Refusal codes, records and event types | domain | — | unit tests: `Period.is_closed` is false at the last second of the month and true at the fi |
 | T2 | Add platform config and one-transaction database helper | infra | — | integration test: a transition for a missing snapshot is rejected (foreign keys on) |
 | T12 | Close the contract deferrals and the SAD doc debt | docs | — | `api-sync-report.md` Deferrals 1-3 are closed or carry an owner decision |
-| T3 | Implement passes, median and cycle-time outcome in computation domain | domain | T1 | unit tests for every AC-01, AC-01b, AC-04, AC-08 row of the [test plan](../test-plan.md) p |
+| T3 | Implement passes, median and cycle-time outcome in computation domain | domain | T1 | unit tests for every AC-01, AC-01b, AC-02, AC-04, AC-08 row of the [test plan](../test-pla |
 | T4 | Read definitions file: versions, retirement, state maps, hashes | app | T1, T2 | integration test with a temporary file: absent file → `definitions_missing`, retired v1 →  |
 | T5 | Import a snapshot file into immutable collection tables | app | T1, T2, T12 | integration test: person fields in the file never reach a table |
 | T7 | Store measurements and state maps by measurement key | infra | T1, T2 | integration test on a migrated temporary database: find by key, insert, second insert of t |
 | T6 | Serve the latest snapshot for a team and period | infra | T5 | integration test: none → `snapshot_missing`; another team's snapshot is not returned; two  |
 | T8 | Compute use case: coverage, key lookup, match or defect, record | app | T3, T7 | integration tests: match records nothing; defect records nothing and returns no value; unm |
 | T9 | Add the import command and the in-process event dispatcher | ports | T5 | e2e in process: new, identical and invalid files give the contract's replies and exit code |
-| T10 | Add the compute command with ordered checks and replies | ports | T4, T6, T8, T9 | e2e in process for every AC-01..AC-10 row of the [test plan](../test-plan.md) marked e2e |
+| T10 | Add the compute command with ordered checks and replies | ports | T4, T6, T8, T9 | e2e in process for every AC-01..AC-11 row (AC-10b included) of the [test plan](../test-plan.md) marked e2e |
 | T11 | Add the NFR suite: all-or-nothing, person scan, offline, run time, smoke | tests | T10 | all five suites pass in `make check` |
 
 Lanes `implement-tasks` will serialize by overlapping `files_hint`: T5 → T6 (`collection/`), T9 → T10 (`cli.py`).
