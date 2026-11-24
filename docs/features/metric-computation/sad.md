@@ -207,7 +207,7 @@ file, retired version, snapshot, state-map coverage. Refusals travel as typed re
 ([F1 ADR 0007](adr/0007-shared-return-refusals-as-typed-results.md)). `/sdlc:complete-sequence-diagrams`
 adds the import flow and the coverage table.
 
-**Critical flow 1: compute and re-run (AC-01, AC-01b, AC-02, AC-03, AC-08)**
+### Critical flow 1: compute and re-run (AC-01, AC-01b, AC-02, AC-03, AC-08)
 
 ```mermaid
 sequenceDiagram
@@ -231,17 +231,17 @@ sequenceDiagram
         Computation->>DB: insert measurement and its state map if new (one transaction)
         Computation-->>CLI: new measurement
         CLI->>CLI: dispatch MetricComputed (no listener yet)
-        CLI-->>Lead: value or "no finished passes", definition id and version, state map, passes, excluded; "not yet checked by Evidence Guard"
+        CLI-->>Lead: value or "no finished passes", definition id and version, state map, passes, excluded, "not yet checked by Evidence Guard"
     else same key, same value and inputs
         Computation-->>CLI: matches the earlier measurement
-        CLI-->>Lead: identical value and inputs; "matches the earlier measurement"; nothing recorded
+        CLI-->>Lead: identical value and inputs, "matches the earlier measurement", nothing recorded
     else same key, different value or inputs
         Computation-->>CLI: reproducibility defect
         CLI-->>Lead: defect report, no value shown, nothing recorded, non-zero exit
     end
 ```
 
-**Critical flow 2: refusals (AC-09, AC-06, AC-05, AC-10, AC-07, AC-04)**
+### Critical flow 2: refusals (AC-09, AC-06, AC-05, AC-10, AC-07, AC-04)
 
 ```mermaid
 sequenceDiagram
@@ -259,11 +259,11 @@ sequenceDiagram
     else definitions file absent
         CLI->>Definitions: current version and state map
         Definitions-->>CLI: Refusal definitions_missing
-        CLI-->>Lead: definitions_missing: the definitions file is missing; nothing recorded
+        CLI-->>Lead: definitions_missing: the definitions file is missing, nothing recorded
     else requested version retired
         CLI->>Definitions: version 1 and state map
         Definitions-->>CLI: Refusal definition_retired, current is version 2
-        CLI-->>Lead: definition_retired: use version 2; version 1 measurements unchanged
+        CLI-->>Lead: definition_retired: use version 2, version 1 measurements unchanged
     else no snapshot for team and period
         CLI->>Collection: latest snapshot for team-beta, 2026-10
         Collection-->>CLI: Refusal snapshot_missing
@@ -277,6 +277,42 @@ sequenceDiagram
 
 Every branch of flow 2 writes nothing; each reply exits with a non-zero code distinct from the defect's.
 
+### Flow 3: import a snapshot file (precondition of AC-07)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as client (CLI)
+    participant S as service (Collection)
+    participant F as external-system (snapshot file)
+    participant D as data-store
+
+    Note over C,S: Precondition: a snapshot file for one team and one period on the Lead's machine
+    C->>S: import the snapshot file for team-alpha, 2026-10
+    S->>F: read the file once
+    F-->>S: issues with state transitions and other fields
+    alt file unreadable or not the snapshot shape
+        S-->>C: import error, nothing stored, non-zero exit
+    else valid file
+        S->>S: keep allowed fields only (issue key, states, timestamps in UTC), drop person fields
+        S->>S: canonical form and its SHA-256 hash
+        S->>D: find snapshot by team, period and hash
+        alt no snapshot with this hash
+            S->>D: insert snapshot and its issue transitions (one transaction)
+            Note over S,D: persists snapshot (team, period, hash, imported at) and issue transitions (snapshot, issue key, from state, to state, at)
+            D-->>S: stored
+            S-->>C: new snapshot with issue and transition counts and its hash
+            C->>C: dispatch TrackerSnapshotCollected (no listener yet)
+        else same team, period and hash already stored
+            S-->>C: identical to the stored snapshot, nothing stored, no event
+        end
+    end
+    Note over C,D: Postcondition: compute reads the latest snapshot for the team and period (by imported at)
+```
+
+A different file for the same team and period is a new snapshot (new hash); the older one stays and its
+measurements keep pointing at it (F1 ADR 0003, F1 ADR 0008).
+
 **Event ledger:**
 
 | Event | bc-map owner | In this feature |
@@ -288,6 +324,36 @@ Every branch of flow 2 writes nothing; each reply exits with a non-zero code dis
 | `DefinitionVersionRetired` | Definitions | not yet as an event: retirement is read from the file at run time and refused (AC-10) (§11 debt) |
 | `MetricComputed` | Computation | published by `compute` after a new measurement; no listener until Evidence Guard |
 | `ReportingPeriodClosed` | external trigger | not produced: closure is the UTC calendar rule on `Period` (§11 debt) |
+
+### Coverage: US/AC → flows
+
+| ID | Realized by (§6 heading) | How | Note |
+|---|---|---|---|
+| US-01 | Critical flow 1: compute and re-run | flow | |
+| US-02 | Critical flow 1: compute and re-run | flow | reply names definition, version, state map, passes, excluded |
+| US-03 | Critical flow 1: compute and re-run | flow | |
+| US-04 | Critical flow 2: refusals | flow | |
+| US-05 | Critical flow 1: compute and re-run | flow | step "map states, build passes (a reopen starts a pass)" |
+| US-06 | Critical flow 2: refusals | flow | |
+| US-07 | Critical flow 2: refusals | flow | |
+| AC-01 | Critical flow 1: compute and re-run | flow | `alt no measurement with this key` |
+| AC-01b | Critical flow 1: compute and re-run | branch | `alt no measurement with this key`, reply "no finished passes" |
+| AC-02 | Critical flow 1: compute and re-run | flow | reply of `alt no measurement with this key` |
+| AC-03 | Critical flow 1: compute and re-run | branch | `else same key, same value and inputs`; `else same key, different value or inputs` (defect) |
+| AC-04 | Critical flow 2: refusals | branch | `else states the state map does not cover` |
+| AC-05 | Critical flow 2: refusals | branch | `else definitions file absent` |
+| AC-06 | Critical flow 2: refusals | branch | `else period not closed` |
+| AC-07 | Critical flow 2: refusals; Flow 3: import a snapshot file | branch | `else no snapshot for team and period`; flow 3 is the fix it names |
+| AC-08 | Critical flow 1: compute and re-run | flow | step "map states, build passes (a reopen starts a pass)" |
+| AC-09 | Critical flow 2: refusals | branch | `alt breakdown by person requested` |
+| AC-10 | Critical flow 2: refusals | branch | `else requested version retired` |
+
+Coverage: 7/7 user stories · 11/11 ACs — 0 non-runtime N/A.
+
+**Flags:**
+- Flow 3 adds participant `external-system (snapshot file)`; §5 declares it as `System_Ext(snap)`, so no new participant for architecture-design.
+- Open for data-model: whether `import` refuses a snapshot of a period that is not closed yet; the SAD is silent (compute refuses it, AC-06).
+- Flows 1 and 2 predate this skill and carry no persist notes; their writes are `computation_measurements` and `computation_state_maps` (§5 touch list).
 
 ## 7. Deployment view
 
