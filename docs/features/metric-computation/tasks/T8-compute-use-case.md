@@ -25,6 +25,7 @@ Given snapshot, version, state map and period: refuse `unmapped_states`, compute
 
 - [ ] integration tests: match records nothing; defect records nothing and returns no value; unmapped states listed and nothing stored
 - [ ] all three branches of flow 1 covered
+- [ ] a changed state map or a newer snapshot records a new measurement and leaves the first row unchanged (AC-03)
 - [ ] `make check` passes
 
 ## Notes

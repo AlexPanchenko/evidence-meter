@@ -56,10 +56,11 @@
       "acs": [
         "AC-01",
         "AC-01b",
+        "AC-02",
         "AC-04",
         "AC-08"
       ],
-      "dod": "unit tests for every AC-01, AC-01b, AC-04, AC-08 row of the [test plan](../test-plan.md) pass on golden data; median of an even count and equal-timestamp tie-break covered; `domain` imports only the standard library and `shared` (architecture test)",
+      "dod": "unit tests for every AC-01, AC-01b, AC-02, AC-04, AC-08 row of the [test plan](../test-plan.md) pass on golden data, including the three pass rules and the UTC month of done; median of an even count and equal-timestamp tie-break covered; `domain` imports only the standard library and `shared` (architecture test)",
       "files_hint": [
         "src/evidence_meter/computation/domain/",
         "tests/test_cycle_time.py",
@@ -152,7 +153,7 @@
         "AC-03",
         "AC-04"
       ],
-      "dod": "integration tests: match records nothing; defect records nothing and returns no value; unmapped states listed and nothing stored; all three branches of flow 1 covered",
+      "dod": "integration tests: match records nothing; defect records nothing and returns no value; unmapped states listed and nothing stored; all three branches of flow 1 covered; a changed state map or a newer snapshot records a new measurement and leaves the first row unchanged (AC-03)",
       "files_hint": [
         "src/evidence_meter/computation/app/",
         "tests/test_compute_use_case.py"
@@ -192,9 +193,11 @@
         "AC-06",
         "AC-07",
         "AC-09",
-        "AC-10"
+        "AC-10",
+        "AC-10b",
+        "AC-11"
       ],
-      "dod": "e2e in process for every AC-01..AC-10 row of the [test plan](../test-plan.md) marked e2e; `--by person` refuses before the definitions file is opened (test asserts no open); output matches the contract's output fields",
+      "dod": "e2e in process for every AC-01..AC-11 row (AC-10b included) of the [test plan](../test-plan.md) marked e2e; `--by person` refuses before the definitions file is opened (test asserts no open); output matches the contract's output fields",
       "files_hint": [
         "src/evidence_meter/entrypoints/cli.py",
         "tests/test_cli_compute.py"
@@ -208,10 +211,12 @@
         "T10"
       ],
       "acs": [
+        "AC-01",
         "AC-02",
+        "AC-04",
         "AC-09"
       ],
-      "dod": "all five suites pass in `make check`; the run-time test fails when the limit is set below the measured time (checked once by hand)",
+      "dod": "all five suites pass in `make check`; contract rows of the [test plan](../test-plan.md) for AC-01, AC-02, AC-04 and AC-09 pass: value stored unrounded and shown to one decimal, stored inputs are counts and hashes only, refusals name states and no issue key, no person field anywhere; the run-time test fails when the limit is set below the measured time (checked once by hand)",
       "files_hint": [
         "tests/test_all_or_nothing.py",
         "tests/test_person_fields.py",

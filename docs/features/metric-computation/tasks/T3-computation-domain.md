@@ -3,7 +3,7 @@ id: T3
 title: "Implement passes, median and cycle-time outcome in computation domain"
 layer: "domain"
 deps: ["T1"]
-acs: ["AC-01", "AC-01b", "AC-04", "AC-08"]
+acs: ["AC-01", "AC-01b", "AC-02", "AC-04", "AC-08"]
 files_hint: ["src/evidence_meter/computation/domain/", "tests/test_cycle_time.py", "tests/golden/"]
 owner: "capstone owner"
 estimate: "L"
@@ -15,7 +15,7 @@ wave: 2
 
 ## Why
 
-[PRD AC-01, AC-01b, AC-04, AC-08](../PRD.md); [sad §6 flow 1](../sad.md); outcome rule [F1 ADR 0009](../adr/0009-computation-record-no-finished-passes-as-an-outcome.md); glossary Pass, Cycle time ([CONTEXT](../CONTEXT.md)).
+[PRD AC-01, AC-01b, AC-02, AC-04, AC-08](../PRD.md); [sad §6 flow 1](../sad.md); outcome rule [F1 ADR 0009](../adr/0009-computation-record-no-finished-passes-as-an-outcome.md); glossary Pass, Cycle time ([CONTEXT](../CONTEXT.md)).
 
 ## What
 
@@ -23,7 +23,7 @@ Pure functions: abstract transitions → passes (a reopen starts a pass; a pass 
 
 ## Definition of Done
 
-- [ ] unit tests for every AC-01, AC-01b, AC-04, AC-08 row of the [test plan](../test-plan.md) pass on golden data
+- [ ] unit tests for every AC-01, AC-01b, AC-02, AC-04, AC-08 row of the [test plan](../test-plan.md) pass on golden data, including the three pass rules and the UTC month of done
 - [ ] median of an even count and equal-timestamp tie-break covered
 - [ ] `domain` imports only the standard library and `shared` (architecture test)
 - [ ] `make check` passes

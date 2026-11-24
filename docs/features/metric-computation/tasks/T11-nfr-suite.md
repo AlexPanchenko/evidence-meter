@@ -3,7 +3,7 @@ id: T11
 title: "Add the NFR suite: all-or-nothing, person scan, offline, run time, smoke"
 layer: "tests"
 deps: ["T10"]
-acs: ["AC-02", "AC-09"]
+acs: ["AC-01", "AC-02", "AC-04", "AC-09"]
 files_hint: ["tests/test_all_or_nothing.py", "tests/test_person_fields.py", "tests/test_offline.py", "tests/test_compute_runtime.py", "tests/test_cli_smoke.py"]
 owner: "capstone owner"
 estimate: "M"
@@ -24,6 +24,7 @@ Parametrised refusal walk with a byte-identical store check; scan of stdout, std
 ## Definition of Done
 
 - [ ] all five suites pass in `make check`
+- [ ] contract rows of the [test plan](../test-plan.md) for AC-01, AC-02, AC-04 and AC-09 pass: value stored unrounded and shown to one decimal, stored inputs are counts and hashes only, refusals name states and no issue key, no person field anywhere
 - [ ] the run-time test fails when the limit is set below the measured time (checked once by hand)
 - [ ] `make check` passes
 
