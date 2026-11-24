@@ -141,7 +141,7 @@ Re-run with the same key (AC-03): the same lines, then `Matches the earlier meas
 |---|---|
 | value | `computation_measurements.value` (REAL, NULL only with `no_finished_passes`) |
 | outcome | `computation_measurements.outcome` (`value` \| `no_finished_passes`, CHECK) |
-| passes counted | `computation_measurements.passes_counted` `# stale`: column gone from data-model.md (reconcile run 2); owner decides |
+| passes counted | `computation_measurements.passes_counted` |
 | issues excluded | `computation_measurements.issues_excluded` |
 | definition id, version, version hash | `computation_measurements.definition_id`, `definition_version`, `definition_version_hash` |
 | state map and its hash | `computation_state_maps.canonical_map`, `state_map_hash` |
