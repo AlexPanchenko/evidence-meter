@@ -14,6 +14,7 @@ MAX_ITER="${MAX_ITER:-10}"          # Safety net 1: hard iteration ceiling
 PROMPT_FILE="${PROMPT_FILE:-PROMPT.md}"
 COST_LOG="${COST_LOG:-cost.log}"    # Safety net 2: per-turn audit trail
 PERMISSION_MODE="${PERMISSION_MODE:-acceptEdits}"
+ALLOWED_TOOLS="${ALLOWED_TOOLS:-}"  # explicit grants; needed when permission mode is forced to default
 
 ITER=0
 
@@ -43,7 +44,8 @@ while [ ! -f DONE ]; do
   # Cold start every turn: a fresh `claude -p` invocation with no accumulated
   # context. The model re-reads PROMPT.md and the current filesystem from
   # scratch — this is what prevents context rot on long runs.
-  claude -p "$(cat "$PROMPT_FILE")" --permission-mode "$PERMISSION_MODE"
+  claude -p "$(cat "$PROMPT_FILE")" --permission-mode "$PERMISSION_MODE" \
+    ${ALLOWED_TOOLS:+--allowedTools "$ALLOWED_TOOLS"}
 
   sleep 1   # make Ctrl-C reliable between turns
 done
